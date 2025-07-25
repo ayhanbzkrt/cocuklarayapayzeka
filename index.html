@@ -1,0 +1,2642 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI'Han Python Eğitim Konsolu - Kukiri ile Öğren! (Pyodide)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">    
+    
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+
+    <style>
+        /* Google Font */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+        /* Genel Stiller ve Renk Değişkenleri */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        :root {
+            --primary: #4e54ff; /* AI Mavisi */
+            --secondary: #6c63ff; /* AI Moru */
+            --accent1: #ff6b6b; /* Macera Kırmızısı */
+            --accent2: #feca57; /* Altın Sarı */
+            --accent3: #1dd1a1; /* Başarı Yeşili */
+            --accent4: #5f27cd; /* Bilim Moru */
+            --light: #f9f9f9; /* Açık Zemin */
+            --dark: #333; /* Koyu Metin */
+            --gradient-blue: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            --gradient-success: linear-gradient(135deg, var(--accent3) 0%, var(--accent4) 100%);
+            --gradient-header-bg: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%); /* Açık Gökyüzü Arkaplan */
+        }
+
+        body {
+            background: var(--gradient-header-bg);
+            color: var(--dark);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column; /* Footer'ı alta sabitlemek için */
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            min-height: 100vh;
+            flex-grow: 1; /* İçeriğin büyümesini sağlar */
+        }
+
+        /* Sidebar Tutorial Menu */
+        .tutorial-sidebar {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            border: 3px solid var(--accent3);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .tutorial-sidebar h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .tutorial-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .category {
+            border: 2px solid #eee;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .category:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .category-header {
+            background: var(--gradient-blue);
+            color: white;
+            padding: 12px 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-topics {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .category.open .category-topics {
+            max-height: 300px; /* Max height for dropdown, adjust as needed */
+        }
+
+        .category.open .category-header i {
+            transform: rotate(180deg);
+        }
+
+        .topic-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .topic-item:last-child {
+            border-bottom: none;
+        }
+
+        .topic-item:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .topic-item.active {
+            background: var(--accent3);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            border: 3px solid var(--accent2);
+        }
+
+        .lesson-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--accent2);
+        }
+
+        .lesson-header h1 {
+            font-size: 2.5rem;
+            background: var(--gradient-blue);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .lesson-header p {
+            font-size: 1.2rem;
+            color: #555;
+        }
+
+        .lesson-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .theory-section, .practice-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #eee;
+        }
+
+        .theory-section h3, .practice-section h3 {
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .example-box {
+            background: #e8f5e8;
+            border: 2px solid var(--accent3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .example-box h4 {
+            color: var(--accent4);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .example-code {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+
+        /* Code Editor controls */
+        .code-editor-container {
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .editor-header {
+            background: var(--gradient-blue);
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* CodeMirror specific styling adjustments */
+        .CodeMirror {
+            border: none; /* Kendi border'ımızı kullanıyoruz */
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            height: 250px; /* Editör yüksekliği */
+            overflow: hidden; /* Dış scrollbarları engelle */
+        }
+        .CodeMirror-scroll {
+            min-height: 250px; /* Minimum yükseklik */
+            overflow-x: auto !important; /* Yatay kaydırmayı aç */
+            overflow-y: auto !important; /* Dikey kaydırmayı aç */
+        }
+        .CodeMirror-gutters {
+            background: #f0f0f0; /* Satır numaraları arkaplanı */
+            border-right: 1px solid #ddd;
+        }
+        .cm-s-dracula.CodeMirror {
+            background: #f8f8f8; /* Editör arkaplanı */
+            color: #333; /* Varsayılan metin rengi */
+        }
+        .cm-s-dracula .CodeMirror-linenumber {
+            color: #aaa; /* Satır numaraları rengi */
+        }
+        /* CodeMirror Python Mode için özel renkler (dracula teması baz alınarak özelleştirme) */
+        .cm-s-dracula .cm-keyword { color: #cc7832; font-weight: bold; } /* Anahtar kelimeler: if, for, def */
+        .cm-s-dracula .cm-string { color: #6a8759; } /* Metinler (string) */
+        .cm-s-dracula .cm-comment { color: #808080; font-style: italic; } /* Yorumlar */
+        .cm-s-dracula .cm-variable { color: #333; } /* Değişkenler (genel) */
+        .cm-s-dracula .cm-number { color: #6897bb; } /* Sayılar */
+        .cm-s-dracula .cm-atom { color: #cc7832; } /* True, False, None */
+        .cm-s-dracula .cm-def { color: #a9b7c6; } /* Fonksiyon/sınıf isimleri (tanımda) */
+        .cm-s-dracula .cm-property { color: #ffc66d; } /* Nesne özellikleri/metot çağrıları (ör: .upper()) */
+        .cm-s-dracula .cm-builtin { color: #629755; font-weight: bold; } /* print, input gibi dahili fonksiyonlar */
+
+
+        .editor-controls {
+            padding: 15px;
+            background: #f1f3f4;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: var(--gradient-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 84, 255, 0.3);
+        }
+
+        .btn.secondary {
+            background: var(--accent1);
+        }
+
+        .btn.success {
+            background: var(--accent3);
+        }
+
+        /* Output Console */
+        .output-console {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 15px;
+            min-height: 150px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 2px solid var(--accent4);
+        }
+
+        .output-success { color: var(--accent3); font-weight: bold; }
+        .output-error { color: var(--accent1); font-weight: bold; }
+        .output-info { color: #81c784; }
+        .output-tip { color: var(--accent2); font-style: italic; }
+        .output-kukiri { color: #dda0dd; font-weight: bold; }
+        
+        /* Pyodide Loading Indicator */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 1.5rem;
+            z-index: 9999;
+        }
+        #loading-overlay .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid var(--primary);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Challenges */
+        .challenge-section {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+            border: 3px solid var(--accent2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .challenge-section h3 {
+            color: var(--accent4);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .challenge-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid var(--accent2);
+        }
+
+        /* Help Modal */
+        .help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+        }
+
+        .help-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-help {
+            float: right;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--accent1);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: var(--light);
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+        }
+
+        .footer p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .footer-link {
+            color: var(--accent3);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--accent2);
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .tutorial-sidebar {
+                position: static;
+            }
+            
+            .lesson-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p>AI'Han Konsol hazırlanıyor... Kukiri ile Python macerasına hazır ol! 🚀</p>
+    </div>
+
+    <div class="container">
+        <div class="tutorial-sidebar">
+            <h2>🐦 Python Eğitimi</h2>
+            <div class="tutorial-categories">
+                <div class="category" data-category="basics">
+                    <div class="category-header">
+                        <span>📚 Temel Kavramlar</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="category-topics">
+                        <div class="topic-item" data-topic="intro">Python'a Giriş</div>
+                        <div class="topic-item" data-topic="syntax">Syntax (Yazım Kuralları)</div>
+                        <div class="topic-item" data-topic="variables">Değişkenler</div>
+                        <div class="topic-item" data-topic="datatypes">Veri Türleri</div>
+                        <div class="topic-item" data-topic="strings">Metinler (String)</div>
+                        <div class="topic-item" data-topic="numbers">Sayılar</div>
+                        <div class="topic-item" data-topic="input">Kullanıcıdan Veri Alma</div>
+                    </div>
+                </div>
+
+                <div class="category" data-category="operators">
+                    <div class="category-header">
+                        <span>🔢 Operatörler</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="category-topics">
+                        <div class="topic-item" data-topic="arithmetic">Aritmetik (+, -, *, /)</div>
+                        <div class="topic-item" data-topic="comparison">Karşılaştırma (==, !=, <, >)</div>
+                        <div class="topic-item" data-topic="logical">Mantıksal (and, or, not)</div>
+                    </div>
+                </div>
+
+                <div class="category" data-category="control">
+                    <div class="category-header">
+                        <span>🎮 Kontrol Yapıları</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="category-topics">
+                        <div class="topic-item" data-topic="if">If Else Koşulları</div>
+                        <div class="topic-item" data-topic="while">While Döngüsü</div>
+                        <div class="topic-item" data-topic="for">For Döngüsü</div>
+                        <div class="topic-item" data-topic="break">Break ve Continue</div>
+                    </div>
+                </div>
+
+                <div class="category" data-category="data">
+                    <div class="category-header">
+                        <span>📊 Veri Yapıları</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="category-topics">
+                        <div class="topic-item" data-topic="lists">Listeler</div>
+                        <div class="topic-item" data-topic="tuples">Tuple'lar</div>
+                        <div class="topic-item" data-topic="dicts">Sözlükler (Dictionary)</div>
+                        <div class="topic-item" data-topic="sets">Kümeler (Set)</div>
+                    </div>
+                </div>
+
+                <div class="category" data-category="functions">
+                    <div class="category-header">
+                        <span>⚙️ Fonksiyonlar</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="category-topics">
+                        <div class="topic-item" data-topic="func-basic">Fonksiyon Temelleri</div>
+                        <div class="topic-item" data-topic="func-params">Parametreler</div>
+                        <div class="topic-item" data-topic="func-return">Return Deyimi</div>
+                    </div>
+                </div>
+
+                <div class="category" data-category="advanced">
+                    <div class="category-header">
+                        <span>🚀 İleri Seviye</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="category-topics">
+                        <div class="topic-item" data-topic="modules">Modüller</div>
+                        <div class="topic-item" data-topic="files">Dosya İşlemleri</div>
+                        <div class="topic-item" data-topic="errors">Hata Yönetimi</div>
+                        <div class="topic-item" data-topic="classes">Sınıflar (Class)</div>
+                        <div class="topic-item" data-topic="games">Mini Oyunlar</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="lesson-header">
+                <h1 id="lesson-title"></h1>
+                <p id="lesson-subtitle"></p>
+            </div>
+
+            <div class="lesson-content">
+                <div class="theory-section">
+                    <h3><i class="fas fa-book"></i> Konu Anlatımı</h3>
+                    <div id="theory-content"></div>
+                </div>
+
+                <div class="practice-section">
+                    <h3><i class="fas fa-code"></i> Örnek Kod</h3>
+                    <div id="example-content"></div>
+                    <button class="btn success" id="copy-example-btn">
+                        <i class="fas fa-copy"></i> İlk Örneği Kopyala
+                    </button>
+                </div>
+            </div>
+
+            <div class="code-editor-container">
+                <div class="editor-header">
+                    <span><i class="fas fa-code"></i> Python Kod Editörü</span>
+                    <span><i class="fas fa-lightbulb"></i> Kukiri burada sana yardım edecek!</span>
+                </div>
+                <textarea id="code-editor" placeholder="Python kodunu buraya yaz... 
+Örnek: print('Merhaba Dünya!')"></textarea>
+                
+                <div class="editor-controls">
+                    <button class="btn" id="run-btn">
+                        <i class="fas fa-play"></i> Kodu Çalıştır (Shift+Enter)
+                    </button>
+                    <button class="btn secondary" id="clear-btn">
+                        <i class="fas fa-trash"></i> Temizle
+                    </button>
+                    <button class="btn success" id="hint-btn">
+                        <i class="fas fa-question"></i> Kukiri'den Yardım
+                    </button>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-terminal"></i> Çıktı Konsolu</h3>
+            <div id="output-console" class="output-console"></div>
+
+            <div class="challenge-section" id="challenges">
+                <h3><i class="fas fa-trophy"></i> Pratik Görevleri</h3>
+                <div id="challenge-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="help-modal" id="help-modal">
+        <div class="help-content">
+            <span class="close-help" id="close-help">&times;</span>
+            <h2>🐦 Kukiri'nin Yardımları</h2>
+            <div id="help-content-text">
+                <p>Merhaba! Ben Kukiri, senin Python rehberin! 🌟</p>
+                <h3>❓ Sık Sorulan Sorular:</h3>
+                <ul>
+                    <li><strong>Kod çalışmıyor:</strong> Yazım hatası olabilir, tırnak ve parantezleri kontrol et!</li>
+                    <li><strong>Syntax Error:</strong> Python yazım kurallarına dikkat et, girinti önemli!</li>
+                    <li><strong>Name Error:</strong> Değişken adını doğru yazdığından emin ol!</li>
+                    <li><strong>Type Error:</strong> Veri tipi hatası! Sayı ile metni karıştırmış olabilirsin!</li>
+                    <li><strong>Import Error:</strong> Bu kütüphane tarayıcıda çalışmıyor olabilir.</li>
+                </ul>
+                <p style="margin-top: 15px;">Unutma, her hata yeni bir öğrenme fırsatıdır! Pes etme! 💪</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© <span id="currentYear"></span> AI'Han ile Yapay Zeka Öğreniyoruz by <a href="https://www.linkedin.com/in/ayhanbozkurt/" target="_blank" class="footer-link">Ayhan Bozkurt</a>. Tüm hakları saklıdır.</p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/indent.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/selection/active-line.min.js"></script>
+
+
+    <script>
+        // Tutorial data structure
+        const tutorialData = {
+            "intro": {
+                title: "Python'a Giriş: Kukiri'nin İlk Macerası! 🚀",
+                subtitle: "Python nedir ve neden senin en iyi arkadaşın olacak?",
+                theory: `
+                    <p>Merhaba küçük kodlama kaşifi! Ben Kukiri, senin Python dünyasındaki rehberin! 🌟 Python, bilgisayarlara ne yapacaklarını söylememize yarayan sihirli bir dil gibidir. Tıpkı arkadaşlarımızla konuşur gibi, Python ile bilgisayarla konuşabiliriz!</p>
+                    <div class="example-box">
+                        <h4>🤔 Python neden özel bir süper güç gibi?</h4>
+                        <ul>
+                            <li><strong>Çok Kolay:</strong> İnsanların konuştuğu dile çok benzer, bu yüzden öğrenmesi süper hızlı!</li>
+                            <li><strong>Süper Güçlü:</strong> Onunla oyunlar (Minecraft bile!), harika web siteleri ve hatta yapay zeka robotları yapabilirsin!</li>
+                            <li><strong>Çok Eğlenceli:</strong> Kendi yaratıcılığını konuşturup harikalar yaratabilirsin! Kukiri de kodlamayı çok seviyor!</li>
+                        </ul>
+                    </div>
+                    <p><strong>🎯 İlk adımımız:</strong> Bilgisayarı konuşturmak! <code>print()</code> komutu ile ekrana istediğin mesajı yazdırabiliriz. Tıpkı bir not defterine yazmak gibi!</p>
+                    <div class="example-box">
+                        <h4>💡 Kukiri'den Not:</h4>
+                        <p><code>print()</code> içine yazdığın metinler mutlaka <strong>tırnak ("")</strong> içinde olmalı. Yoksa bilgisayar ne yazdığını anlayamaz ve hata verir!</p>
+                    </div>
+                    <p>Şimdi hazırsan, ilk sihirli kelimelerimizi yazalım!</p>
+                `,
+                examples: [
+                    {
+                        code: `# İlk Python kodun! 🎉
+print("Merhaba Dünya!")
+`,
+                        description: "Klasik başlangıç mesajı."
+                    },
+                    {
+                        code: `print("Python öğreniyorum! 🐍")
+print("Kukiri ile kodlama çok eğlenceli!")
+`,
+                        description: "Birden fazla satır yazdırma."
+                    },
+                    {
+                        code: `benim_adim = "Kukiri"
+print(f"Benim adım {benim_adim}!")
+`,
+                        description: "Değişken kullanarak mesaj yazdırma."
+                    },
+                     {
+                        code: `print(123)
+print(3.14)
+`,
+                        description: "Sayıları doğrudan yazdırma."
+                    }
+                ],
+                challenges: [
+                    "Ekrana kendi adını yazdır: Örneğin 'Ben [Adın]!'",
+                    "Kukiri'ye 'Merhaba Kukiri, sen çok tatlısın!' diye seslen",
+                    "Bir sayı (örneğin favori yaşın) ve bir metni (örneğin 'yıl önce doğdum') ayrı print komutlarıyla alt alta yazdır",
+                    "Kukiri ile birlikte bir şiir yaz (3 farklı print satırı kullanarak)"
+                ]
+            },
+            "syntax": {
+                title: "Syntax (Yazım Kuralları): Kukiri'nin Sihirli Kitabı! 📖",
+                subtitle: "Python nasıl yazılır? Kurallar nelerdir?",
+                theory: `
+                    <p>Python'da yazım kuralları çok önemli! Bilgisayar bu kurallara göre anlıyor. Tıpkı bir oyunun kuralları gibi düşün. Bu kurallara <strong>Syntax (Yazım Kuralları)</strong> deriz. 🎯</p>
+                    <div class="example-box">
+                        <h4>⚠️ Kukiri'nin Önemli Kuralları:</h4>
+                        <ul>
+                            <li><strong>Girintiler:</strong> Python'da kod blokları (<code>if</code>, <code>for</code>, <code>def</code> gibi) için **girintiler (boşluklar)** kullanırız. Genellikle 4 boşluk bırakırız. Bu, kodun düzenli olmasını ve Python'ın neyin neye ait olduğunu anlamasını sağlar.</li>
+                            <li><strong>Tırnak İşaretleri:</strong> Metinler (string'ler) tek (<code>''</code>) veya çift (<code>""</code>) tırnak içinde yazılır. İkisi de aynı işi görür.</li>
+                            <li><strong>Parantezler:</strong> Açtığın her parantezi <code>()</code> mutlaka kapatmalısın. Tıpkı bir kutunun kapağı gibi!</li>
+                            <li><strong>İki Nokta (<code>:</code>):</strong> <code>if</code>, <code>for</code>, <code>def</code> gibi bazı ifadelerin sonunda iki nokta <code>:</code> kullanılır. Bu, "buradan sonra yeni bir kod bloğu başlıyor!" anlamına gelir.</li>
+                            <li><strong>Yorumlar (<code>#</code>):</strong> <code>#</code> ile başlayan satırlar kod olarak çalışmaz. Bunlar senin için not almak veya kodu açıklamak içindir. Kukiri de not almayı çok sever!</li>
+                        </ul>
+                    </div>
+                    <p>Bu kurallara dikkat edersen, Python senin söylediklerini çok daha kolay anlayacaktır!</p>
+                `,
+                examples: [
+                    {
+                        code: `print("Bu doğru bir yazım") # Metin tırnak içinde
+`,
+                        description: "Metinleri tırnak içinde yazma."
+                    },
+                    {
+                        code: `# Girintili kod bloğu örneği
+yas = 10
+if yas > 5: # İki nokta üst üste ve alt satırda girinti var
+    print("Yaş 5'ten büyük!") # Burası 4 boşluk girintili
+`,
+                        description: "Girintinin önemi."
+                    },
+                    {
+                        code: `# Bu bir yorum satırıdır, Python bu satırı görmezden gelir.
+# Programına notlar eklemek için harika bir yol!
+print("Yorumlar kodu etkilemez.")
+`,
+                        description: "Yorum satırları ekleme."
+                    }
+                ],
+                challenges: [
+                    "Hatasız bir <code>print('Merhaba Kukiri!')</code> komutu yaz ve çalıştır.",
+                    "<code>#</code> ile kendi ismini yazdığın bir yorum satırı ekle.",
+                    "Basit bir <code>if True:</code> bloğu oluşturup içine girintili bir <code>print()</code> komutu yaz. (Örnekteki gibi yapabilirsin)"
+                ]
+            },
+            "variables": {
+                title: "Değişkenler: Kukiri'nin Bilgi Kutuları! 📦",
+                subtitle: "Bilgileri nasıl saklarız ve kullanırız?",
+                theory: `
+                    <p>Hayatımızda birçok bilgiyi hatırlamamız gerekir, değil değil mi? Bilgisayarlar da öyle! Python'da bilgileri saklamak için <strong>değişkenler</strong> kullanırız. Değişkenler, içine değerler koyabileceğin etiketli kutular gibidir! 📦</p>
+                    <div class="example-box">
+                        <h4>🎯 Kukiri'nin Değişken Kuralları:</h4>
+                        <ul>
+                            <li><strong>Kutuya İsim Vermek:</strong> Değişkenlere anlamlı isimler vermelisin. Mesela, adın için <code>isim</code>, yaşın için <code>yas</code>.</li>
+                            <li><strong>İsim Kuralları:</strong>
+                                <ul>
+                                    <li>Türkçe karakter (ç, ğ, ı, ö, ş, ü) kullanma. İngilizce harfler ve rakamlar kullan.</li>
+                                    <li>Sayı ile başlayamaz! (<code>sayi1</code> doğru, <code>1sayi</code> yanlış)</li>
+                                    <li>Boşluk bırakamazsın. Eğer iki kelime kullanacaksan <code>_</code> (alt çizgi) kullanabilirsin (<code>en_sevdigim_renk</code>).</li>
+                                </ul>
+                            </li>
+                            <li><strong>Değer Koymak:</strong> Kutunun içine değer koymak için <code>=</code> (eşittir) işaretini kullanırız. Buna **atama (assignment)** denir. (Örnek: <code>isim = "Kukiri"</code>)</li>
+                            <li><strong>Otomatik Tanıma:</strong> Python çok akıllı! Sen kutuya ne koyarsan, onun ne tür bir bilgi (metin, sayı vb.) olduğunu otomatik olarak anlar.</li>
+                        </ul>
+                    </div>
+                    <p>Değişkenler sayesinde aynı bilgiyi tekrar tekrar yazmak yerine, sadece kutunun ismini söyleyebiliriz!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Metin (String) kutusu
+kullanici_adi = "Maceracı Mert"
+print(f"Hoş geldin, {kullanici_adi}!")
+`,
+                        description: "Metin türünde değişken tanımlama."
+                    },
+                    {
+                        code: `# Sayı (Integer) kutusu
+oyun_skoru = 150
+print(f"Oyun skorun: {oyun_skoru}")
+`,
+                        description: "Tam sayı türünde değişken tanımlama."
+                    },
+                    {
+                        code: `# Değişkenin değerini değiştirebiliriz
+oyun_skoru = 100
+oyun_skoru = oyun_skoru + 50 # Oyun skoru arttı!
+print(f"Yeni oyun skorun: {oyun_skoru}")
+`,
+                        description: "Değişkenin değerini güncelleme."
+                    }
+                ],
+                challenges: [
+                    "Kendi adını, yaşını ve en sevdiğin rengi farklı değişkenlere ata.",
+                    "Bu değişkenleri kullanarak ekrana 'Benim adım [ad], [yaş] yaşındayım ve en sevdiğim renk [renk].' şeklinde bir cümle yazdır.",
+                    "Bir <code>kalem_sayisi</code> değişkeni oluştur, başlangıçta 5 olsun. Sonra bu sayıyı 2 azalt ve yeni değeri ekrana yazdır."
+                ]
+            },
+            "datatypes": {
+                title: "Veri Türleri: Kukiri'nin Oyuncak Kutusu! 🧸",
+                subtitle: "Python'da farklı veri türleri nelerdir?",
+                theory: `
+                    <p>Python'da her bilginin bir türü vardır, tıpkı oyuncak kutundaki farklı oyuncaklar gibi! 🧸 Python hangi verinin ne tür olduğunu bilirse, onunla daha iyi çalışabilir. En sık kullanılan veri türlerine bir göz atalım:</p>
+                    <div class="example-box">
+                        <h4>🔢 Kukiri'nin Temel Veri Türleri:</h4>
+                        <ul>
+                            <li><strong><code>str</code> (String / Metin):</strong> Kelimeler, cümleler, harfler... yani yazı olan her şey! Tırnak içinde yazılırlar. (Örnek: <code>"Merhaba"</code>)</li>
+                            <li><strong><code>int</code> (Integer / Tam Sayı):</strong> Tüm tam sayılar. Pozitif, negatif veya sıfır olabilir. (Örnek: <code>5</code>, <code>100</code>)</li>
+                            <li><strong><code>float</code> (Float / Ondalıklı Sayı):</strong> Virgüllü sayılar. (Örnek: <code>3.14</code>, <code>0.5</code>)</li>
+                            <li><strong><code>bool</code> (Boolean / Mantıksal Değer):</strong> Sadece iki değeri vardır: <code>True</code> (Doğru) veya <code>False</code> (Yanlış). Karar verirken çok işe yarar!</li>
+                        </ul>
+                    </div>
+                    <p>Bazen bir veri türünü başka bir türe dönüştürmen gerekebilir. Mesela kullanıcıdan aldığın bir yaş bilgisini (metin olarak gelir) sayıya dönüştürmek gibi. Bunun için <code>int()</code>, <code>str()</code>, <code>float()</code>, <code>bool()</code> gibi fonksiyonları kullanırız.</p>
+                `,
+                examples: [
+                    {
+                        code: `# String (str)
+okul_adi = "Kodlama Akademisi"
+print(f"Okul Adı: {okul_adi}, Türü: {type(okul_adi)}")
+`,
+                        description: "Metin (String) veri türü."
+                    },
+                    {
+                        code: `# Integer (int)
+sinif_mevcudu = 25
+print(f"Sınıf Mevcudu: {sinif_mevcudu}, Türü: {type(sinif_mevcudu)}")
+`,
+                        description: "Tam sayı (Integer) veri türü."
+                    },
+                    {
+                        code: `# Float (float)
+boy_uzunlugu = 1.35
+print(f"Boy Uzunluğu: {boy_uzunlugu}, Türü: {type(boy_uzunlugu)}")
+`,
+                        description: "Ondalıklı sayı (Float) veri türü."
+                    },
+                    {
+                        code: `# Boolean (bool)
+oyun_acik_mi = True
+print(f"Oyun Açık mı?: {oyun_acik_mi}, Türü: {type(oyun_acik_mi)}")
+`,
+                        description: "Mantıksal (Boolean) veri türü."
+                    },
+                    {
+                        code: `# Tür Dönüşümleri
+yas_metin = "12"
+yas_sayi = int(yas_metin) # Metni tam sayıya dönüştürdük
+print(f"Yaşın iki katı: {yas_sayi * 2}")
+`,
+                        description: "Metinden tam sayıya dönüşüm."
+                    }
+                ],
+                challenges: [
+                    "Kendi favori hayvanının adını (metin), yaşını (tam sayı) ve ortalama ömrünü (ondalıklı sayı) değişkenlere ata. Her birinin türünü (<code>type()</code>) ekrana yazdır.",
+                    "Kullanıcıdan aldığı bir metin girdisini sayıya çevirip 10 ile çarp ve sonucu yazdır (eğer sayı girmezse ne olacağını düşün!).",
+                    "<code>True</code> ve <code>False</code> değerlerini içeren iki boolean değişken oluştur ve ekrana yazdır."
+                ]
+            },
+            "strings": {
+                title: "Metinler (String): Kukiri'nin Kelime Oyunu! ✍️",
+                subtitle: "String'ler (metinler) nasıl kullanılır ve onlarla neler yapabiliriz?",
+                theory: `
+                    <p>Metinler, yani <strong>String'ler (str)</strong>, Python'da kelimeleri, cümleleri ve diğer yazı verilerini saklamak için kullanılır. Tırnak içinde ("" veya '') yazılırlar. String'lerle çok eğlenceli şeyler yapabiliriz! ✨</p>
+                    <div class="example-box">
+                        <h4>🔧 Kukiri'nin String Sihirleri:</h4>
+                        <ul>
+                            <li><strong>Birleştirme (<code>+</code>):</strong> İki metni yan yana getirmek için <code>+</code> işaretini kullanırız. (Örnek: <code>"Merhaba" + " Dünya"</code>)</li>
+                            <li><strong>Tekrar (<code>*</code>):</strong> Bir metni istediğin kadar tekrar ettirmek için <code>*</code> işaretini kullanırız. (Örnek: <code>"Kukiri" * 3</code>)</li>
+                            <li><strong>Uzunluk (<code>len()</code>):</strong> Bir metnin kaç harften oluştuğunu öğrenmek için <code>len()</code> fonksiyonunu kullanırız. (Örnek: <code>len("Python")</code>)</li>
+                            <li><strong>Büyük/Küçük Harf Dönüşümü:</strong>
+                                <ul>
+                                    <li><code>.upper()</code>: Metindeki tüm harfleri büyütür.</li>
+                                    <li><code>.lower()</code>: Metindeki tüm harfleri küçültür.</li>
+                                </ul>
+                            </li>
+                            <li><strong>Harf Değiştirme (<code>.replace()</code>):</strong> Metindeki bir kısmı başka bir şeyle değiştirebiliriz. (Örnek: <code>"elma".replace("e", "a")</code> -> "alma")</li>
+                            <li><strong><code>f-string</code> (Sihirli Metinler!):</strong> Metinlerin içine değişkenleri kolayca yerleştirmek için <code>f"..."</code> kullanırız. Çok modern ve kullanışlıdır! (Örnek: <code>f"Yaşım: {yas}"</code>)</li>
+                        </ul>
+                    </div>
+                    <p>Şimdi bu sihirli kelimeleri kullanarak kendi metin oyunlarımızı yaratalım!</p>
+                `,
+                examples: [
+                    {
+                        code: `adi = "Python"
+soyadi = "Öğreniyorum"
+tam_mesaj = "Merhaba " + adi + " " + soyadi + "!"
+print(tam_mesaj)
+`,
+                        description: "String birleştirme."
+                    },
+                    {
+                        code: `sevimli_kukiri = "Kukiri! " * 3
+print(sevimli_kukiri)
+`,
+                        description: "String tekrarı."
+                    },
+                    {
+                        code: `kelime = "Macera"
+print(f"'{kelime}' kelimesi {len(kelime)} harf içeriyor.")
+`,
+                        description: "String uzunluğunu bulma."
+                    },
+                    {
+                        code: `adi = "Python"
+buyuk_harf = adi.upper()
+kucuk_harf = adi.lower()
+print(f"Büyük harf: {buyuk_harf}")
+print(f"Küçük harf: {kucuk_harf}")
+`,
+                        description: "Büyük/küçük harf dönüşümü."
+                    },
+                    {
+                        code: `eski_kelime = "programlama"
+yeni_kelime = eski_kelime.replace("a", "o")
+print(f"Değişen kelime: {yeni_kelime}")
+`,
+                        description: "Harf değiştirme."
+                    },
+                    {
+                        code: `favori_renk = "mavi"
+favori_oyun = "Roblox"
+print(f"Benim en sevdiğim renk {favori_renk} ve en sevdiğim oyun {favori_oyun}!")
+`,
+                        description: "f-string kullanımı."
+                    }
+                ],
+                challenges: [
+                    "Kendi adını ve soyadını farklı değişkenlere ata, sonra bunları f-string kullanarak 'Benim adım [Ad] [Soyad].' şeklinde birleştirıp yazdır.",
+                    "En sevdiğin bir kelimeyi 10 kez tekrar et ve ekrana yazdır.",
+                    "Bir cümle yaz (örneğin: 'Python çok kolay bir dil.') ve bu cümlenin hem büyük harfli halini hem de karakter sayısını ekrana yazdır.",
+                    "Bir metinde belirli bir harfi başka bir harfle değiştir. Örneğin: 'elma' kelimesindeki 'e' harfini 'a' ile değiştir."
+                ]
+            },
+            "numbers": {
+                title: "Sayılar: Kukiri'nin Matematik Oyunu! ➕➖✖️➗",
+                subtitle: "Python'da sayılar ve matematiksel işlemler",
+                theory: `
+                    <p>Python sayılarla harika işlemler yapabilir! Tıpkı bir hesap makinesi gibi, toplama, çıkarma, çarpma, bölme ve daha fazlasını yapabilirsin. 🧮</p>
+                    <div class="example-box">
+                        <h4>📊 Kukiri'nin Sayı Türleri ve İşlemleri:</h4>
+                        <ul>
+                            <li><strong><code>int</code> (Tam Sayı):</strong> Virgülü olmayan sayılar (<code>10</code>, <code>-5</code>).</li>
+                            <li><strong><code>float</code> (Ondalıklı Sayı):</strong> Virgüllü sayılar (<code>3.14</code>, <code>2.5</code>).</li>
+                            <li><strong>Aritmetik Operatörler:</strong>
+                                <ul>
+                                    <li><code>+</code> : Toplama</li>
+                                    <li><code>-</code> : Çıkarma</li>
+                                    <li><code>*</code> : Çarpma</li>
+                                    <li><code>/</code> : Bölme (<strong>Ondalıklı sonuç</strong> verir!)</li>
+                                    <li><code>//</code> : Tam Bölme (Sadece **tam sayı kısmını** alır)</li>
+                                    <li><code>%</code> : Mod (Bölme işleminden kalanı bulur)</li>
+                                    <li><code>**</code> : Üs Alma</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <p>Unutma, <code>/</code> ile yapılan bölme işlemi her zaman ondalıklı sayı (<code>float</code>) döndürür.</p>
+                `,
+                examples: [
+                    {
+                        code: `sayi1 = 20
+sayi2 = 6
+print(f"Toplama: {sayi1 + sayi2}")
+print(f"Çıkarma: {sayi1 - sayi2}")
+`,
+                        description: "Toplama ve çıkarma işlemleri."
+                    },
+                    {
+                        code: `sayi1 = 20
+sayi2 = 6
+print(f"Çarpma: {sayi1 * sayi2}")
+print(f"Bölme: {sayi1 / sayi2}")
+`,
+                        description: "Çarpma ve bölme işlemleri."
+                    },
+                    {
+                        code: `sayi1 = 20
+sayi2 = 6
+print(f"Tam Bölme: {sayi1 // sayi2}")
+print(f"Kalan (Mod): {sayi1 % sayi2}")
+`,
+                        description: "Tam bölme ve mod alma."
+                    },
+                    {
+                        code: `taban = 5
+kuvvet = 3
+print(f"{taban} üzeri {kuvvet}: {taban ** kuvvet}")
+`,
+                        description: "Üs alma işlemi."
+                    }
+                ],
+                challenges: [
+                    "Kukiri'nin sihirli çantasında 50 elma var. Eğer her gün 7 elma yerse, 5 gün sonra çantada kaç elma kalır? Hesapla ve yazdır.",
+                    "Bir oyun karakterinin canı 100 olsun. Her vuruşta 15 can azalıyor. Karakter 3 vuruş aldıktan sonra kaç canı kalır? Hesapla.",
+                    "Bir dikdörtgenin kısa kenarı 8, uzun kenarı 12 olsun. Bu dikdörtgenin alanını ve çevresini hesaplayan kodu yazdır.",
+                    "Bir sayının 4'e bölünüp bölünmediğini (kalanın sıfır olup olmadığını) kontrol eden bir kod yaz (sayı 20, 21 ve 24 için dene)."
+                ]
+            },
+            "input": {
+                title: "Kullanıcıdan Veri Alma: Kukiri Sohbet Ediyor! 🗣️",
+                subtitle: "<code>input()</code> ile programını interaktif yap!",
+                theory: `
+                    <p>Programın sadece sana bir şeyler söylemesi sıkıcı olabilir, değil mi? Peki ya program seninle konuşabilse? 🗣️ İşte <code>input()</code> komutu tam da bunun için var! Bu komut sayesinde kullanıcıdan (yani senden) bilgi alabiliriz.</p>
+                    <div class="example-box">
+                        <h4>💬 Kukiri'nin <code>input()</code> Sohbet Kuralları:</h4>
+                        <ul>
+                            <li><strong>Soru Sormak:</strong> <code>input()</code> içine yazdığın metin, kullanıcıya sorulacak sorudur. (Örnek: <code>input("Adın ne? ")</code>)</li>
+                            <li><strong>Metin Olarak Geri Gelir:</strong> Kullanıcı ne yazarsa yazsın (bir sayı bile olsa), <code>input()</code> her zaman o bilgiyi <strong>metin (string)</strong> olarak verir.</li>
+                            <li><strong>Sayıya Dönüştürme:</strong> Eğer kullanıcıdan bir sayı alıp onunla matematik yapmak istersen, o metni sayıya dönüştürmen gerekir. Bunun için <code>int()</code> (tam sayı için) veya <code>float()</code> (ondalıklı sayı için) kullanırız. (Örnek: <code>yas = int(input("Kaç yaşındasın? "))</code>)</li>
+                        </ul>
+                    </div>
+                    <p><code>input()</code> ile kendi sohbet botlarını veya basit oyunları yapmaya başlayabilirsin! Kukiri de seninle sohbet etmeye bayılıyor!</p>
+                `,
+                examples: [
+                    {
+                        code: `print("Merhaba! Ben Kukiri, senin Python arkadaşın.")
+ad = input("Adın ne? ")
+print(f"Ne güzel bir isim, {ad}!")
+`,
+                        description: "Kullanıcıdan isim alma."
+                    },
+                    {
+                        code: `renk = input("En sevdiğin renk ne? ")
+print(f"Vay, {renk} gerçekten harika bir renk!")
+`,
+                        description: "Kullanıcıdan favori renk alma."
+                    },
+                    {
+                        code: `try:
+    sayi_metin = input("Bana bir sayı söyle: ")
+    sayi = int(sayi_metin) # Metni sayıya dönüştürdük!
+    print(f"Söylediğin sayının iki katı: {sayi * 2}")
+except ValueError:
+    print("Kukiri uyarısı: Üzgünüm, sayı yerine harf girdin. Lütfen sadece sayı gir!")
+`,
+                        description: "Kullanıcıdan sayı alıp dönüştürme ve hata yakalama."
+                    }
+                ],
+                challenges: [
+                    "Kullanıcıdan favori yemeğini sor ve cevabı 'Ben [yemek] yemeyi çok severim!' şeklinde ekrana yazdır.",
+                    "Kullanıcıdan 'Doğduğun yıl kaçtı?' diye sor. Bu bilgiyi sayıya çevirip, şu anki yıl ile (2025 varsayabilirsin) arasındaki farkı (yaşını) hesapla ve ekrana yazdır.",
+                    "Kullanıcıdan iki kelime al ve bu iki kelimeyi birleştirerek yeni bir kelime oluşturup yazdır. Örneğin, 'elma' ve 'ağacı' -> 'elmaağacı'."
+                ]
+            },
+            "arithmetic": {
+                title: "Aritmetik Operatörler: Kukiri'nin Hesap Makinesi! 🔢",
+                subtitle: "Sayılarla temel işlemler",
+                theory: `
+                    <p>Aritmetik operatörler, sayılarla matematiksel işlemler yapmanı sağlar. Tıpkı bir hesap makinesi gibi! 🧮 Bu operatörler sayesinde toplama, çıkarma, çarpma, bölme gibi temel işlemleri kodlarında yapabilirsin.</p>
+                    <div class="example-box">
+                        <h4>🔢 Kukiri'nin Operatör Tablosu:</h4>
+                        <ul>
+                            <li><strong><code>+</code> : Toplama</strong></li>
+                            <li><strong><code>-</code> : Çıkarma</strong></li>
+                            <li><strong><code>*</code> : Çarpma</strong></li>
+                            <li><strong><code>/</code> : Bölme</strong> (<strong>Ondalıklı sonuç</strong> verir!)</li>
+                            <li><strong><code>//</code> : Tam Bölme</strong> (Sadece **tam sayı kısmını** alır)</li>
+                            <li><strong><code>%</code> : Mod (Kalan)</strong> (Bölme işleminden kalanı bulur)</li>
+                            <li><strong><code>**</code> : Üs Alma</strong></li>
+                        </ul>
+                    </div>
+                    <p>Bu operatörleri kullanarak sayıları istediğin gibi işleyebilir ve hesaplamalar yapabilirsin!</p>
+                `,
+                examples: [
+                    {
+                        code: `sayi1 = 20
+sayi2 = 6
+print(f"Toplama: {sayi1 + sayi2}")
+print(f"Çıkarma: {sayi1 - sayi2}")
+`,
+                        description: "Toplama ve çıkarma işlemleri."
+                    },
+                    {
+                        code: `sayi1 = 20
+sayi2 = 6
+print(f"Çarpma: {sayi1 * sayi2}")
+print(f"Bölme: {sayi1 / sayi2}")
+`,
+                        description: "Çarpma ve bölme işlemleri."
+                    },
+                    {
+                        code: `sayi1 = 20
+sayi2 = 6
+print(f"Tam Bölme: {sayi1 // sayi2}")
+print(f"Kalan (Mod): {sayi1 % sayi2}")
+`,
+                        description: "Tam bölme ve mod alma."
+                    },
+                    {
+                        code: `taban = 5
+kuvvet = 3
+print(f"{taban} üzeri {kuvvet}: {taban ** kuvvet}")
+`,
+                        description: "Üs alma işlemi."
+                    }
+                ],
+                challenges: [
+                    "Kukiri'nin sihirli çantasında 50 elma var. Eğer her gün 7 elma yerse, 5 gün sonra çantada kaç elma kalır? Hesapla ve yazdır.",
+                    "Bir oyun karakterinin canı 100 olsun. Her vuruşta 15 can azalıyor. Karakter 3 vuruş aldıktan sonra kaç canı kalır? Hesapla.",
+                    "Bir dikdörtgenin kısa kenarı 8, uzun kenarı 12 olsun. Bu dikdörtgenin alanını ve çevresini hesaplayan kodu yazdır.",
+                    "Bir sayının 4'e bölünüp bölünmediğini (kalanın sıfır olup olmadığını) kontrol eden bir kod yaz (sayı 20, 21 ve 24 için dene)."
+                ]
+            },
+            "comparison": {
+                title: "Karşılaştırma Operatörleri: Kukiri Karar Veriyor! ⚖️",
+                subtitle: "Değerleri karşılaştır ve karar ver",
+                theory: `
+                    <p>Karşılaştırma operatörleri, iki değeri birbirine göre karşılaştırmanı sağlar. Tıpkı iki şeyi yan yana koyup "Hangisi daha büyük?", "Bunlar aynı mı?" diye sormak gibi! 📏 Sonuç her zaman <strong><code>True</code> (doğru)</strong> veya <strong><code>False</code> (yanlış)</strong> olur! ✅❌</p>
+                    <div class="example-box">
+                        <h4>⚖️ Kukiri'nin Karşılaştırma Listesi:</h4>
+                        <ul>
+                            <li><strong><code>==</code> : Eşit mi?</strong></li>
+                            <li><strong><code>!=</code> : Eşit değil mi?</strong></li>
+                            <li><strong><code>></code> : Büyük mü?</strong></li>
+                            <li><strong><code><</code> : Küçük mü?</strong></li>
+                            <li><strong><code>>=</code> : Büyük veya eşit mi?</strong></li>
+                            <li><strong><code><=</code> : Küçük veya eşit mi?</strong></li>
+                        </ul>
+                    </div>
+                    <p>Bu operatörler, programlarının akışını kontrol etmek için çok önemlidir. Mesela, bir oyun karakterinin canı sıfıra eşit mi diye kontrol etmek için kullanabiliriz!</p>
+                `,
+                examples: [
+                    {
+                        code: `kukiri_yas = 8
+kullanici_yas = 10
+print(f"Yaşlar eşit mi? {kukiri_yas == kullanici_yas}")
+print(f"Yaşlar eşit değil mi? {kukiri_yas != kullanici_yas}")
+`,
+                        description: "Eşitlik ve eşitsizlik kontrolü."
+                    },
+                    {
+                        code: `kullanici_yas = 10
+kukiri_yas = 8
+print(f"Kullanıcı Kukiri'den büyük mü? {kullanici_yas > kukiri_yas}")
+print(f"Kukiri kullanıcıdan küçük mü? {kukiri_yas < kullanici_yas}")
+`,
+                        description: "Büyüklük ve küçüklük kontrolü."
+                    },
+                    {
+                        code: `min_oyuncu_yas = 7
+kukiri_yas = 8
+print(f"Kukiri oyunu oynayabilir mi? {kukiri_yas >= min_oyuncu_yas}")
+`,
+                        description: "Büyük/eşit ve küçük/eşit kontrolü."
+                    },
+                    {
+                        code: `isim1 = "Python"
+isim2 = "python"
+print(f"'{isim1}' == '{isim2}' : {isim1 == isim2}")
+print(f"'{isim1.lower()}' == '{isim2.lower()}' : {isim1.lower() == isim2.lower()}")
+`,
+                        description: "Metin karşılaştırma (büyük/küçük harf duyarlılığı)."
+                    }
+                ],
+                challenges: [
+                    "İki sayının (örneğin 15 ve 15) birbirine eşit olup olmadığını kontrol et ve sonucu yazdır.",
+                    "Bir çocuğun yaşını (örneğin 12) belirle. Eğer yaşı 13'ten küçükse veya eşitse 'Çocuk ücretsiz girebilir.' yazdıran bir kontrol yap.",
+                    "İki farklı kelimeyi (örneğin 'elma' ve 'armut') eşit olup olmadığını kontrol et ve sonucu yazdır. Sonra bir de aynı kelimelerle (örneğin 'Kukiri' ve 'kukiri') büyük/küçük harf fark etmeksizin kontrol et."
+                ]
+            },
+            "logical": {
+                title: "Mantıksal Operatörler: Kukiri'nin Karar Ağacı! 🧩",
+                subtitle: "Birden fazla koşulu birleştir",
+                theory: `
+                    <p>Mantıksal operatörler, birden fazla koşulu bir araya getirerek daha büyük ve karmaşık kararlar vermeni sağlar. Tıpkı bir bulmacanın parçalarını birleştirmek gibi! 🧩</p>
+                    <div class="example-box">
+                        <h4>💡 Kukiri'nin Karar Vericileri:</h4>
+                        <ul>
+                            <li><strong><code>and</code> (VE):</strong> Her iki koşul da **doğruysa** (<code>True</code>) sonuç <code>True</code> olur. Eğer bir tanesi bile yanlışsa (<code>False</code>), sonuç <code>False</code> olur.</li>
+                            <li><strong><code>or</code> (VEYA):</strong> En az bir koşul **doğruysa** (<code>True</code>) sonuç <code>True</code> olur. Sadece iki koşul da yanlışsa sonuç <code>False</code> olur.</li>
+                            <li><strong><code>not</code> (DEĞİL):</strong> Bir koşulun **tersini** alır. Eğer koşul <code>True</code> ise <code>False</code> yapar, <code>False</code> ise <code>True</code> yapar.</li>
+                        </ul>
+                    </div>
+                    <p>Bu operatörler sayesinde programların çok daha akıllı kararlar verebilir!</p>
+                `,
+                examples: [
+                    {
+                        code: `# And (VE) operatörü
+yas = 14
+boy = 160
+if yas >= 13 and boy >= 150:
+    print("Luna Park'a girebilirsin! 🎡")
+else:
+    print("Üzgünüm, Luna Park'a giriş için şartlar tam uymuyor.")
+`,
+                        description: "İki koşulun birden doğru olmasını gerektiren 'and' kullanımı."
+                    },
+                    {
+                        code: `# Or (VEYA) operatörü
+hava_guzel_mi = False
+disari_cikmak_istiyor_mu = True
+if hava_guzel_mi or disari_cikmak_istiyor_mu:
+    print("Dışarı çıkmak için bir sebep var! 🌳")
+else:
+    print("Bugün evde kalıp kitap okuyabiliriz. 📚")
+`,
+                        description: "Koşullardan en az birinin doğru olmasını gerektiren 'or' kullanımı."
+                    },
+                    {
+                        code: `# Not (DEĞİL) operatörü
+gorev_tamamlandi_mi = False
+if not gorev_tamamlandi_mi:
+    print("Görev tamamlanmadı! Hadi devam edelim! 💪")
+`,
+                        description: "Bir koşulun tersini almak için 'not' kullanımı."
+                    }
+                ],
+                challenges: [
+                    "Kukiri'ye bir ödül vermek için hem 'çok iyi' (metin) hem de 'çok çalıştı' (metin) şartlarının ikisi de doğruysa 'Ödülü hak ettin!' yazdır.",
+                    "Sınav notun 60'tan büyük VEYA projen 80'den büyükse 'Sınavı geçtin!' yazdıran bir koşul oluştur.",
+                    "Bir kapının 'açık_mı' diye bir durumu olsun (True/False). Eğer kapı AÇIK DEĞİLSE 'Kapı kapalı, açmalısın.' yazdıran bir kod yaz."
+                ]
+            },
+            "if": {
+                title: "If Else Koşulları: Kukiri Karar Kutusu! 🚦",
+                subtitle: "<code>if/else</code> ile koşullu durumlar",
+                theory: `
+                    <p>Programlar da insanlar gibi karar verebilir! 🚦 <strong><code>if/else</code> (eğer/değilse)</strong> koşulları sayesinde, farklı durumlara göre farklı şeyler yapabiliriz. Tıpkı hava yağmurluysa şemsiye almak, değilse almamak gibi!</p>
+                    <div class="example-box">
+                        <h4>🔍 Kukiri'nin Karar Kutusu:</h4>
+                        <ul>
+                            <li><strong><code>if</code>:</strong> "Eğer" anlamına gelir. Eğer bir koşul doğruysa, <code>if</code> bloğundaki kodlar çalışır.</li>
+                            <li><strong><code>elif</code> (else if):</strong> "Değilse eğer" anlamına gelir. Önceki <code>if</code> veya <code>elif</code> koşulları yanlışsa, başka bir koşulu kontrol eder. İstediğin kadar <code>elif</code> kullanabilirsin.</li>
+                            <li><strong><code>else</code>:</strong> "Değilse" anlamına gelir. Eğer hiçbir <code>if</code> veya <code>elif</code> koşulu doğru değilse, <code>else</code> bloğundaki kodlar çalışır. Genellikle en sona konur.</li>
+                            <li><strong>Girintiler:</strong> <code>if</code>, <code>elif</code>, <code>else</code> sonrası kodlar mutlaka **girintili (4 boşluk)** olmalıdır.</li>
+                        </ul>
+                    </div>
+                    <p>Bu yapılarla programlarını daha akıllı ve etkileşimli hale getirebilirsin!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Basit If koşulu
+yas = 10
+if yas >= 10:
+    print("Oyuna girebilirsin!")
+`,
+                        description: "Sadece 'if' kullanarak basit bir koşul."
+                    },
+                    {
+                        code: `# If-Else koşulu
+hava_durumu = "yağmurlu"
+if hava_durumu == "güneşli":
+    print("Dışarı çıkabiliriz!")
+else:
+    print("Evde kalalım.")
+`,
+                        description: "Doğru veya yanlış duruma göre farklı çıktı verme."
+                    },
+                    {
+                        code: `# If-Elif-Else koşulu
+notu = 75
+if notu >= 90:
+    print("Notun A!")
+elif notu >= 70:
+    print("Notun B!")
+else:
+    print("Notun C!")
+`,
+                        description: "Birden fazla ihtimali kontrol etme."
+                    }
+                ],
+                challenges: [
+                    "Kukiri'nin bir notu (0-100 arası) olsun. Eğer not 85 ve üzeriyse 'Çok iyi!', 70-84 arasındaysa 'İyi!', 50-69 arasındaysa 'Geçtin!', aksi halde 'Tekrar denemelisin.' yazdıran bir program yaz.",
+                    "Kullanıcıdan bir sayı girmesini iste. Eğer sayı 0'dan büyükse 'Pozitif!', 0'dan küçükse 'Negatif!', 0'a eşitse 'Sıfır!' yazdıran bir program yaz.",
+                    "Bir 'kitap_turu' değişkeni oluştur ('fantastik', 'bilimkurgu', 'macera' gibi). Seçilen türe göre farklı bir kitap tavsiyesi yazdıran bir kod yaz."
+                ]
+            },
+            "for": {
+                title: "For Döngüsü: Kukiri'nin Tekrar Tekrar Macerası! ♻️",
+                subtitle: "<code>for</code> döngüsü ile tekrarlı işlemler",
+                theory: `
+                    <p>Bazen bir şeyi tekrar tekrar yapmak isteriz, değil mi? Mesela 10 kere "Merhaba!" demek veya bir listedeki her elemanı tek tek kontrol etmek. İşte <strong><code>for</code> döngüsü</strong> tam da bunun için var! 💪</p>
+                    <div class="example-box">
+                        <h4>🔄 Kukiri'nin <code>for</code> Döngüsü Sırları:</h4>
+                        <ul>
+                            <li><strong>Belirli Sayıda Tekrar:</strong> <code>range()</code> fonksiyonu ile belirli bir sayıya kadar tekrar edebiliriz.
+                                <ul>
+                                    <li><code>range(5)</code>: 0, 1, 2, 3, 4 sayılarını verir (5'i dahil etmez, hep 0'dan başlar).</li>
+                                    <li><code>range(1, 6)</code>: 1, 2, 3, 4, 5 sayılarını verir (1'den başlar, 6'yı dahil etmez).</li>
+                                </ul>
+                            </li>
+                            <li><strong>Liste İçinde Dolaşma:</strong> Bir listenin (veya metnin) içindeki her şeyi tek tek almak için kullanabiliriz.</li>
+                            <li><strong>Girinti:</strong> Döngünün içinde çalışacak kodlar **girintili (4 boşluk)** olmalıdır.</li>
+                        </ul>
+                    </div>
+                    <p><code>for</code> döngüsü ile tekrarlı işleri çok hızlı ve kolayca yapabilirsin! Kukiri de döngüleri çok seviyor, çünkü işleri hızlandırıyor!</p>
+                `,
+                examples: [
+                    {
+                        code: `# 1'den 5'e kadar sayı sayma
+print("Kukiri sayı sayıyor:")
+for i in range(1, 6): # 1, 2, 3, 4, 5
+    print(f"Sayı: {i}!")
+`,
+                        description: "<code>range()</code> kullanarak belirli sayıda tekrar."
+                    },
+                    {
+                        code: `# Bir listedeki meyveleri tek tek yazdır
+meyveler = ["elma", "muz", "çilek"]
+print("\nKukiri'nin favori meyveleri:")
+for meyve in meyveler:
+    print(f"Ben {meyve} severim!")
+`,
+                        description: "Liste elemanları üzerinde döngü."
+                    },
+                    {
+                        code: `# Bir kelimenin harflerini tek tek yazdır
+kelime = "Python"
+print("\nPython kelimesinin harfleri:")
+for harf in kelime:
+    print(f"Harf: {harf}")
+`,
+                        description: "Bir metnin harfleri üzerinde döngü."
+                    },
+                    {
+                        code: `# 1'den 10'a kadar olan sayıların toplamı
+toplam = 0
+for sayi in range(1, 11):
+    toplam = toplam + sayi
+print(f"1'den 10'a kadar olan sayıların toplamı: {toplam}")
+`,
+                        description: "Sayıların toplamını hesaplama."
+                    }
+                ],
+                challenges: [
+                    "1'den 15'e kadar olan sayıları tek tek ekrana yazdır.",
+                    "En sevdiğin 3 oyuncağı bir liste oluştur ve bir <code>for</code> döngüsüyle her birini 'Benim [oyuncak] oyuncağım var.' şeklinde yazdır.",
+                    "Kendi adını bir kelime olarak ata ve bu ismin her harfini alt alta yazdır.",
+                    "1'den 5'e kadar olan sayıların çarpımını (faktöriyelini) bir <code>for</code> döngüsü kullanarak hesapla ve yazdır."
+                ]
+            },
+            "while": {
+                title: "While Döngüsü: Kukiri Durdurulana Kadar Koşuyor! 🏃‍♀️",
+                subtitle: "Bir koşul doğru olduğu sürece çalış",
+                theory: `
+                    <p><strong><code>while</code> döngüsü</strong>, belirli bir koşul **<code>True</code> (doğru)** olduğu sürece bir kod bloğunu tekrar tekrar çalıştırır. 🔄 Tıpkı koşmaya devam eden bir robot gibi, sen ona "dur" diyene kadar koşmaya devam eder.</p>
+                    <div class="example-box">
+                        <h4>⚠️ Kukiri'nin Dikkat Notu:</h4>
+                        <ul>
+                            <li><strong>Durma Koşulu:</strong> <code>while</code> döngüsünün durması için mutlaka bir koşulun bir noktada <code>False</code> olması gerekir. Yoksa sonsuz döngüye girer ve programın takılmasına neden olabilir!</li>
+                            <li><strong>Değişkeni Güncelle:</strong> Döngünün içindeki koşulu etkileyen değişkeni güncellemeyi asla unutma! (Örnek: Sayacı artırmak, kullanıcıdan yeni bir girdi almak)</li>
+                            <li><strong>Girinti:</strong> Döngü içindeki kodlar **girintili (4 boşluk)** olmalıdır.</li>
+                        </ul>
+                    </div>
+                    <p><code>while</code> döngüsü genellikle ne kadar tekrar edeceğini bilmediğimiz durumlarda (mesela kullanıcı doğru şifreyi girene kadar) kullanılır.</p>
+                `,
+                examples: [
+                    {
+                        code: `# Geri sayım örneği
+sayac = 3
+print("Kukiri geri sayıma başlıyor:")
+while sayac > 0:
+    print(f"{sayac}...")
+    sayac -= 1 # Sayacı 1 azalt (bu olmazsa sonsuz döngü olur!)
+print("Kukiri fırlatıldı! 🚀")
+`,
+                        description: "Basit bir geri sayım döngüsü."
+                    },
+                    {
+                        code: `# Şifre deneme oyunu (doğru_sifre 'kukiri' olsun)
+dogru_sifre = "kukiri"
+girilen_sifre = ""
+print("\nKukiri'nin gizli kutusu var. Şifreyi tahmin et!")
+while girilen_sifre != dogru_sifre:
+    girilen_sifre = input("Şifreyi gir: ")
+    if girilen_sifre == dogru_sifre:
+        print("Tebrikler! Doğru şifre! 🎉")
+    else:
+        print("Yanlış şifre! Tekrar dene. 😔")
+`,
+                        description: "Kullanıcı doğru şifreyi girene kadar tekrar etme."
+                    },
+                    {
+                        code: `# Kullanıcı 'bitir' diyene kadar devam eden döngü
+mesaj = ""
+print("Kukiri ile sohbet et. 'bitir' yazarsan dururum.")
+while mesaj.lower() != "bitir":
+    mesaj = input("Kukiri'ye bir şey söyle: ")
+    if mesaj.lower() != "bitir":
+        print(f"Sen söyledin: {mesaj}")
+print("Kukiri sohbeti bitiriyor. Hoşça kal! 👋")
+`,
+                        description: "Belirli bir kelime girilene kadar döngü."
+                    }
+                ],
+                challenges: [
+                    "Kullanıcı 'dur' yazana kadar kullanıcıdan şehir ismi almaya devam eden ve her seferinde şehri ekrana yazdıran bir program yaz.",
+                    "Bir sayacın 0'dan başlayıp 10'a kadar (10 dahil) artmasını sağlayan bir <code>while</code> döngüsü oluştur. Her adımda sayacı yazdır.",
+                    "Kukiri'nin enerji seviyesi 100 olsun. Her hareketinde 10 enerji harcasın. Enerjisi 0'ın altına düşene kadar kaç hareket yapabildiğini hesapla ve yazdır (her hareketten sonra 'Enerji: X' yazdır)."
+                ]
+            },
+            "break": {
+                title: "Break ve Continue: Kukiri'nin Kısa Yolları! 🛑⏩",
+                subtitle: "Döngüleri kontrol etmenin yolları",
+                theory: `
+                    <p>Bazen döngülerimiz çok uzun olabilir veya belirli bir durumda hemen durmasını isteyebiliriz. İşte <strong><code>break</code></strong> ve <strong><code>continue</code></strong> komutları tam da bu kısa yollar için var! 🛑⏩</p>
+                    <div class="example-box">
+                        <h4>🚦 Kukiri'nin Yol İşaretleri:</h4>
+                        <ul>
+                            <li><strong><code>break</code> (Durdur!):</strong> <code>break</code> komutu, döngüyü anında tamamen durdurur ve döngüden çıkar. Tıpkı acil fren yapmak gibi! (Örnek: Bir şeyi bulduğunda aramayı durdurmak)</li>
+                            <li><strong><code>continue</code> (Atla! Devam Et!):</strong> <code>continue</code> komutu, döngünün o anki adımını (iterasyonunu) atlar ve bir sonraki adıma geçer. Tıpkı bir engeli atlayıp yola devam etmek gibi! (Örnek: Belirli bir sayıyı yazdırmadan geçmek)</li>
+                        </ul>
+                    </div>
+                    <p>Bu komutlar sayesinde döngülerini daha akıllıca yönetebilir ve gereksiz adımlardan kaçınabilirsin.</p>
+                `,
+                examples: [
+                    {
+                        code: `# Break örneği: Sayı 3 olunca dur
+print("Sayı 3 olunca duruyorum...")
+for i in range(5): # 0, 1, 2, 3, 4
+    if i == 3:
+        print("3'ü buldum! Durdum! 🛑")
+        break # Döngüyü tamamen durdur
+    print(f"Şu anki sayı: {i}")
+`,
+                        description: "Belirli bir koşulda döngüyü durdurma."
+                    },
+                    {
+                        code: `# Continue örneği: Sayı 2'yi atla
+print("\nSayı 2'yi atlıyorum...")
+for x in range(5): # 0, 1, 2, 3, 4
+    if x == 2:
+        print("2'yi atladım! ⏩")
+        continue # Bu adımı atla ve döngüye devam et
+    print(f"Şu anki sayı: {x}")
+`,
+                        description: "Belirli bir adımı atlayıp döngüye devam etme."
+                    },
+                    {
+                        code: `# Şifre deneme (break ile)
+dogru_sifre = "sifre123"
+print("\nŞifre deneme oyunu (break ile):")
+for deneme_sayisi in range(1, 4): # 3 deneme hakkı
+    girilen_sifre = input(f"Şifreyi gir (Deneme {deneme_sayisi}): ")
+    if girilen_sifre == dogru_sifre:
+        print("Giriş başarılı! 🎉")
+        break # Doğru şifre girilince döngüden çık
+    else:
+        print("Yanlış şifre. 😔")
+else: # Döngü break olmadan biterse bu kod çalışır (yani hak biterse)
+    print("Tüm hakların bitti. Kilitlendi. 🔒")
+`,
+                        description: "Şifre deneme oyununda 'break' kullanımı."
+                    }
+                ],
+                challenges: [
+                    "1'den 10'a kadar sayıları yazdır, ama 7'ye gelince döngüyü <code>break</code> ile tamamen durdur.",
+                    "1'den 10'a kadar sayıları yazdır, ama 5'i yazdırdıktan sonra <code>continue</code> ile atla (yani 5 konsolda görünmesin, 6'dan devam etsin).",
+                    "Kullanıcıdan isimler alan bir program yaz. Eğer kullanıcı 'dur' yazarsa döngüyü bitir. Eğer kullanıcı 'geç' yazarsa o ismi yazdırmadan bir sonraki isme geç.",
+                    "Bir listedeki sayıları kontrol et. İlk 10'dan büyük sayıyı bulur bulmaz döngüyü durdur ve o sayıyı yazdır."
+                ]
+            },
+            "lists": {
+                title: "Listeler: Kukiri'nin Koleksiyonları! 📊",
+                subtitle: "Çoklu veri saklama ve yönetme",
+                theory: `
+                    <p>Bazen tek bir değişkende sadece bir bilgi saklayabiliriz. Peki ya birden fazla bilgiyi (örneğin favori filmlerini) tek bir yerde tutmak istersek? İşte burada <strong>Listeler</strong> devreye giriyor! 📊</p>
+                    <p>Listeler, birden fazla elemanı **sıralı** bir şekilde tutabilen özel kutular gibidir. Köşeli parantez <code>[]</code> ile oluşturulurlar ve içindeki elemanları virgülle ayırırız.</p>
+                    <div class="example-box">
+                        <h4>📋 Kukiri'nin Liste Sihirleri:</h4>
+                        <ul>
+                            <li><strong>Oluşturma:</strong> <code>meyveler = ["elma", "muz", "çilek"]</code></li>
+                            <li><strong>Elemanlara Erişim (İndeksleme):</strong> Listelerdeki elemanlara konumlarına göre ulaşırız. Python'da saymaya **0'dan başlarız!**
+                                <ul>
+                                    <li><code>liste[0]</code>: İlk eleman</li>
+                                    <li><code>liste[-1]</code>: Son eleman</li>
+                                </ul>
+                            </li>
+                            <li><strong>Eleman Ekleme:</strong> <code>.append()</code> metodu ile listenin en sonuna yeni bir eleman ekleyebiliriz.</li>
+                            <li><strong>Eleman Silme:</strong> <code>.remove()</code> (belirli bir değeri siler) veya <code>.pop()</code> (en sondaki elemanı siler) metotları.</li>
+                            <li><strong>Liste Uzunluğu (<code>len()</code>):</strong> <code>len(liste_adı)</code> ile listenin kaç elemanı olduğunu öğreniriz.</li>
+                            <li><strong>Döngü ile Gezinme:</strong> <code>for</code> döngüsü ile listedeki her elemanı tek tek işleyebiliriz.</li>
+                        </ul>
+                    </div>
+                    <p>Listeler sayesinde verileri çok daha düzenli ve kolayca yönetebiliriz!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Liste oluşturma
+renkler = ["kırmızı", "mavi", "yeşil"]
+print(f"Başlangıç renkler listesi: {renkler}")
+`,
+                        description: "Basit bir liste oluşturma."
+                    },
+                    {
+                        code: `# Elemanlara erişim (unutma, 0'dan başlar!)
+renkler = ["kırmızı", "mavi", "yeşil"]
+print(f"İlk renk: {renkler[0]}")
+print(f"Son renk: {renkler[-1]}")
+`,
+                        description: "Listeden elemanlara indeks ile erişim."
+                    },
+                    {
+                        code: `# Eleman ekleme (.append())
+renkler = ["kırmızı", "mavi", "yeşil"]
+renkler.append("sarı")
+print(f"Sarı eklendi: {renkler}")
+`,
+                        description: "Listeye eleman ekleme."
+                    },
+                    {
+                        code: `# Eleman silme (.remove())
+renkler = ["kırmızı", "mavi", "yeşil"]
+renkler.remove("mavi")
+print(f"Mavi silindi: {renkler}")
+`,
+                        description: "Listeden eleman silme."
+                    },
+                     {
+                        code: `# Liste uzunluğu
+renkler = ["kırmızı", "mavi", "yeşil"]
+print(f"Listenin uzunluğu: {len(renkler)}")
+`,
+                        description: "Listenin uzunluğunu bulma."
+                    },
+                    {
+                        code: `# Liste elemanlarını döngü ile gezme
+renkler = ["kırmızı", "mavi", "yeşil"]
+print("\nFavori renklerim:")
+for r in renkler:
+    print(f"- {r}")
+`,
+                        description: "Bir liste üzerinde döngü yapma."
+                    }
+                ],
+                challenges: [
+                    "En sevdiğin 4 hayvanı içeren bir liste oluştur. Bu listenin ilk ve son hayvanını ekrana yazdır.",
+                    "Oluşturduğun hayvan listesine yeni bir hayvan ekle (<code>.append()</code> kullan). Sonra bir hayvanı listeden sil (<code>.remove()</code> kullan). Güncel listeyi yazdır.",
+                    "Bir sayı listesi oluştur ([10, 20, 30, 40, 50]). Bu listedeki tüm sayıların toplamını bir <code>for</code> döngüsü kullanarak hesapla ve yazdır.",
+                    "Bir 'yapılacaklar' listesi oluştur ([oku, yaz, kodla]). Bu listeye 'oyna'yı ekle. Sonra listedeki her şeyi tek tek 'Yapılacak: [görev]' şeklinde yazdır."
+                ]
+            },
+            "tuples": {
+                title: "Tuple'lar: Kukiri'nin Sabit Koleksiyonları! 🔒",
+                subtitle: "Değiştirilemez listeler",
+                theory: `
+                    <p>Tuple'lar da tıpkı listeler gibi birden fazla veriyi bir arada tutar. Ama çok önemli bir farkı var: **bir kere oluşturulduktan sonra içindeki elemanları değiştiremezsin!** 🔒 Bu yüzden onlara "sabit" veya "değiştirilemez" koleksiyonlar diyoruz.</p>
+                    <p>Tuple'lar normal parantez <code>()</code> ile oluşturulur ve içindeki elemanları virgülle ayırırız.</p>
+                    <div class="example-box">
+                        <h4>🔒 Kukiri'nin Tuple Özellikleri:</h4>
+                        <ul>
+                            <li><strong>Oluşturma:</strong> <code>koordinat = (10, 20)</code></li>
+                            <li><strong>Değiştirilemez:</strong> Elemanlarını sonradan ekleyemez, silemez veya değiştiremezsin. Bu yüzden güvenli veriler için idealdir.</li>
+                            <li><strong>Erişim (İndeksleme):</strong> Listeler gibi, elemanlara konumlarına göre ulaşırız. Yine 0'dan başlarız! (<code>koordinat[0]</code>)</li>
+                            <li><strong>Tek Elemanlı Tuple:</strong> Eğer tek elemanlı bir tuple oluşturuyorsan, elemandan sonra mutlaka bir virgül koymalısın! (<code>(5,)</code> gibi). Yoksa Python bunu tuple olarak değil, normal bir sayı olarak anlar.</li>
+                            <li>Genellikle sabit veri setleri (örneğin koordinatlar, renk kodları, doğum tarihleri) için kullanılırlar.</li>
+                        </ul>
+                    </div>
+                    <p>Tuple'lar, Kukiri'nin asla değişmemesi gereken önemli bilgileri sakladığı özel kutularıdır!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Tuple oluşturma
+dogum_tarihi = (2015, 7, 10) # Yıl, Ay, Gün
+print(f"Kukiri'nin doğum tarihi: {dogum_tarihi}")
+`,
+                        description: "Basit bir tuple oluşturma."
+                    },
+                    {
+                        code: `# Elemanlara erişim
+dogum_tarihi = (2015, 7, 10)
+print(f"Doğum yılın: {dogum_tarihi[0]}")
+`,
+                        description: "Tuple elemanlarına indeks ile erişim."
+                    },
+                    {
+                        code: `# Tuple'ları birleştirme (yeni bir tuple oluşur)
+gezegenler_sirasi = ("Merkür", "Venüs")
+ek_gezegen = ("Dünya",)
+tum_gezegenler = gezegenler_sirasi + ek_gezegen
+print(f"Tüm gezegenler: {tum_gezegenler}")
+`,
+                        description: "İki tuple'ı birleştirme."
+                    },
+                    {
+                        code: `# Tek elemanlı tuple (virgüle dikkat!)
+tek_sayi_tuple = (7,)
+print(f"Tek elemanlı tuple: {tek_sayi_tuple}, Türü: {type(tek_sayi_tuple)}")
+`,
+                        description: "Tek elemanlı tuple oluşturma (virgülün önemi)."
+                    }
+                ],
+                challenges: [
+                    "Kendi doğum gününü tuple olarak kaydet (örneğin: (gün, ay, yıl)). Bu tuple'daki ayı ekrana yazdır.",
+                    "Bir şehrin enlem ve boylam koordinatlarını (örneğin: (41.0, 28.9)) bir tuple olarak oluştur ve ekrana yazdır.",
+                    "İki farklı tuple oluştur (örneğin, birinde favori meyvelerin, diğerinde favori sebzelerin olsun). Bu iki tuple'ı birleştirerek yeni bir tuple oluştur ve yazdır."
+                ]
+            },
+            "dicts": {
+                title: "Sözlükler (Dictionary): Kukiri'nin Bilgi Hazinesi! 📚",
+                subtitle: "Anahtar-değer çiftleriyle veri saklama",
+                theory: `
+                    <p>Sözlükler, bilgileri tıpkı gerçek bir kelime sözlüğü gibi, **anahtar-değer (key-value)** çiftleri halinde saklar! 📚 Her bilginin bir "anahtarı" (ismi) ve bu anahtara karşılık gelen bir "değeri" vardır. Bu sayede istediğin bilgiye hızlıca ulaşabilirsin.</p>
+                    <p>Sözlükler süslü parantez <code>{}</code> ile oluşturulur. Her çift, anahtar: değer şeklinde yazılır ve virgülle ayrılır.</p>
+                    <div class="example-box">
+                        <h4>🔑 Kukiri'nin Sözlük Özellikleri:</h4>
+                        <ul>
+                            <li><strong>Oluşturma:</strong> <code>bilgi = {"isim": "Kukiri", "yaş": 8}</code></li>
+                            <li><strong>Anahtar (Key):</strong> Bilginin adı, etiketi. Genellikle metin (string) olur.</li>
+                            <li><strong>Değer (Value):</strong> Anahtara karşılık gelen bilgi. Her tür veri olabilir (metin, sayı, liste vb.).</li>
+                            <li><strong>Erişim:</strong> Köşeli parantez kullanarak anahtarı yazarsın ve o anahtarın değerini alırsın. (Örnek: <code>bilgi["isim"]</code>)</li>
+                            <li><strong>Değiştirilebilir:</strong> Listeler gibi, sözlüklere yeni eleman ekleyebilir, var olanları değiştirebilir veya silebilirsin.</li>
+                            <li><strong><code>.keys()</code>:</strong> Tüm anahtarları gösterir.</li>
+                            <li><strong><code>.values()</code>:</strong> Tüm değerleri gösterir.</li>
+                            <li><strong><code>.items()</code>:</strong> Tüm anahtar-değer çiftlerini gösterir.</li>
+                        </ul>
+                    </div>
+                    <p>Sözlükler, birbirine bağlı bilgileri düzenli tutmak için harika bir yoldur!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Sözlük oluşturma - Bir karakterin özellikleri
+karakter = {
+    "ad": "Kukiri",
+    "tür": "Robot Kuş",
+    "güç_seviyesi": 95
+}
+print(f"Karakterin adı: {karakter['ad']}")
+`,
+                        description: "Basit bir sözlük oluşturma ve elemana erişim."
+                    },
+                    {
+                        code: `# Yeni eleman ekleme
+karakter = {"ad": "Kukiri"}
+karakter["mod"] = "Keşif"
+print(f"Yeni eklenen mod: {karakter['mod']}")
+print(f"Güncel karakter bilgileri: {karakter}")
+`,
+                        description: "Sözlüğe yeni eleman ekleme."
+                    },
+                    {
+                        code: `# Eleman değerini değiştirme
+karakter = {"güç_seviyesi": 95}
+karakter["güç_seviyesi"] = 100
+print(f"Yeni güç seviyesi: {karakter['güç_seviyesi']}")
+`,
+                        description: "Sözlükteki elemanın değerini değiştirme."
+                    },
+                    {
+                        code: `# Eleman silme
+karakter = {"ad": "Kukiri", "konum": "Gizli Orman"}
+del karakter["konum"]
+print(f"Konum bilgisi silindi: {karakter}")
+`,
+                        description: "Sözlükten eleman silme."
+                    },
+                    {
+                        code: `# Tüm anahtarları ve değerleri görme
+karakter = {"ad": "Kukiri", "tür": "Robot Kuş"}
+print(f"Tüm anahtarlar: {karakter.keys()}")
+print(f"Tüm değerler: {karakter.values()}")
+print(f"Tüm anahtar-değer çiftleri: {karakter.items()}")
+`,
+                        description: "Sözlüğün anahtarlarını, değerlerini ve çiftlerini listeleme."
+                    }
+                ],
+                challenges: [
+                    "Kendi favori oyununun adını, türünü (RPG, macera vb.) ve puanını (1-10) içeren bir sözlük oluştur. Oyunun adını ve puanını ekrana yazdır.",
+                    "Oluşturduğun oyun sözlüğüne yeni bir özellik (örneğin 'yapımcı') ekle ve ekrana yazdır.",
+                    "Sözlükten 'tür' bilgisini sil ve güncel sözlüğü yazdır.",
+                    "Kendi sınıfındaki 3 arkadaşının isimlerini ve yaşlarını içeren bir sözlük oluştur (anahtar isim, değer yaş). Tüm arkadaşların isimlerini tek tek yazdır."
+                ]
+            },
+            "sets": {
+                title: "Kümeler (Set): Kukiri'nin Benzersiz Nesneler Kutusu! 🎩",
+                subtitle: "Benzersiz elemanları saklama (sıra önemli değil)",
+                theory: `
+                    <p>Kümeler, matematikteki kümeler gibidir: Sadece **benzersiz** elemanları saklar! 🎩 Yani aynı elemandan birden fazla varsa, küme onu sadece bir kez tutar. Ayrıca elemanların belirli bir sırası yoktur.</p>
+                    <p>Kümeler süslü parantez <code>{}</code> ile oluşturulur (sözlüklere benziyor ama anahtar-değer çifti yok!) veya <code>set()</code> fonksiyonu ile oluşturulur.</p>
+                    <div class="example-box">
+                        <h4>✨ Kukiri'nin Küme Özellikleri:</h4>
+                        <ul>
+                            <li><strong>Oluşturma:</strong> <code>renkler = {"kırmızı", "mavi", "kırmızı"}</code> (ikinci kırmızı yok sayılır)</li>
+                            <li><strong>Benzersizlik:</strong> En önemli özelliği budur. Tekrar eden elemanları otomatik olarak eler.</li>
+                            <li><strong>Sırasız:</strong> Elemanların belirli bir sırası yoktur. Her çalıştırdığında farklı bir sırada görünebilir.</li>
+                            <li><strong>Eleman Ekleme:</strong> <code>.add()</code> metodu ile tek bir eleman eklersin.</li>
+                            <li><strong>Eleman Silme:</strong> <code>.remove()</code> (eleman yoksa hata verir) veya <code>.discard()</code> (eleman yoksa hata vermez) metodlarını kullanırsın.</li>
+                            <li><strong>Küme İşlemleri:</strong> Matematikteki küme işlemleri (kesişim, birleşim, fark) çok kolay yapılır!</li>
+                        </ul>
+                    </div>
+                    <p>Kümeler, tekrar eden verileri temizlemek veya farklı veri grupları arasında karşılaştırmalar yapmak için çok kullanışlıdır.</p>
+                `,
+                examples: [
+                    {
+                        code: `# Küme oluşturma - Tekrar edenler yok sayılır
+meyveler = {"elma", "muz", "çilek", "elma"}
+print(f"Meyveler kümesi: {meyveler}")
+`,
+                        description: "Basit bir küme oluşturma ve benzersizlik özelliği."
+                    },
+                    {
+                        code: `# Eleman ekleme/silme
+meyveler = {"elma", "muz"}
+meyveler.add("nar")
+print(f"Nar eklendi: {meyveler}")
+meyveler.remove("muz")
+print(f"Muz silindi: {meyveler}")
+`,
+                        description: "Kümeye eleman ekleme ve silme."
+                    },
+                    {
+                        code: `# Eleman olup olmadığını kontrol et
+meyveler = {"elma", "çilek"}
+if "çilek" in meyveler:
+    print("Çilek kümede var! 🍓")
+`,
+                        description: "Bir elemanın kümede olup olmadığını kontrol etme."
+                    },
+                    {
+                        code: `# Küme işlemleri (Ortak hobiler)
+kukiri_hobileri = {"kodlama", "resim yapma"}
+arkadas_hobileri = {"resim yapma", "oyun oynama"}
+ortak_hobiler = kukiri_hobileri & arkadas_hobileri
+print(f"Ortak hobiler: {ortak_hobiler}")
+`,
+                        description: "İki kümenin kesişimini bulma."
+                    },
+                    {
+                        code: `# Bir listedeki tekrar edenleri temizlemek
+tekrar_eden_sayilar = [1, 2, 2, 3, 4, 4, 5, 1]
+benzersiz_sayilar = set(tekrar_eden_sayilar)
+print(f"Benzersiz sayılar: {list(benzersiz_sayilar)}")
+`,
+                        description: "Listelerdeki tekrar eden elemanları kümelerle temizleme."
+                    }
+                ],
+                challenges: [
+                    "En sevdiğin 5 meyveyi içeren bir küme oluştur (bazılarını tekrar et). Kümenin içeriğini yazdır ve kaç tane benzersiz meyve olduğunu gör.",
+                    "Bu kümeye yeni bir meyve ekle ve bir tanesini sil. Güncel kümeyi yazdır.",
+                    "Sınıfınızdaki 'erkek_isimleri' ve 'kız_isimleri' diye iki küme oluştur (örneğin: `erkek_isimleri = {'Ali', 'Can'}`). Bu iki kümenin birleşimini (tüm isimleri) ve kesişimini (ortak isimler varsa) bulup yazdır.",
+                    "Bir cümlede ('Python öğreniyorum çok eğlenceli') geçen benzersiz kelimeleri bulmak için kümeyi kullan (kelimeleri ayırman gerekebilir, ipucu: <code>.split()</code>)."
+                ]
+            },
+            "func-basic": {
+                title: "Fonksiyon Temelleri: Kukiri'nin Özel Komutları! ⚙️",
+                subtitle: "Fonksiyon oluşturma ve kullanma",
+                theory: `
+                    <p>Program yazarken bazen aynı kod bloklarını tekrar tekrar kullanmak isteriz. İşte bu noktada <strong>fonksiyonlar</strong> devreye giriyor! 🔧 Fonksiyonlar, belirli bir görevi yapan ve istediğin zaman çalıştırabileceğin kendi özel komutlarını oluşturmana yarar. Bu sayede kodunu düzenli tutar ve aynı şeyi tekrar tekrar yazmaktan kurtulursun!</p>
+                    <div class="example-box">
+                        <h4>⚙️ Kukiri'nin Fonksiyon Tarifi:</h4>
+                        <ul>
+                            <li><strong>Tanımlama (<code>def</code>):</strong> Bir fonksiyonu oluşturmak için <code>def</code> anahtar kelimesini kullanırız.</li>
+                            <li><strong>İsim Verme:</strong> Fonksiyona ne iş yaptığını anlatan anlamlı bir isim veririz.</li>
+                            <li><strong>Parantez <code>()</code>:</strong> Fonksiyon adından sonra mutlaka parantez koyarız.</li>
+                            <li><strong>İki Nokta <code>:</code>:</strong> Fonksiyon tanımının sonunda iki nokta <code>:</code> kullanılır.</li>
+                            <li><strong>Girinti:</strong> Fonksiyonun içinde çalışacak kodlar **girintili (4 boşluk)** olmalıdır.</li>
+                        </ul>
+                        <h4>⚙️ Kukiri'nin Fonksiyon Çağırma Sihri:</h4>
+                        <ul>
+                            <li>Fonksiyonu çalıştırmak için sadece adını yazıp ardından parantez <code>()</code> koyman yeterli! (Örnek: <code>selamla()</code>)</li>
+                        </ul>
+                    </div>
+                    <p>Fonksiyonlar, kodunu daha okunabilir, yönetilebilir ve tekrar kullanılabilir hale getirir. Hadi ilk özel komutlarımızı yazalım!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Basit bir karşılama fonksiyonu
+def selamla():
+    print("Merhaba, Python dünyasına hoş geldin! 👋")
+
+# Fonksiyonu çağırma
+selamla()
+`,
+                        description: "Parametresiz basit bir fonksiyon."
+                    },
+                    {
+                        code: `# Birden fazla kez çağırma
+def selamla():
+    print("Merhaba!")
+selamla()
+selamla()
+selamla()
+`,
+                        description: "Fonksiyonu birden fazla kez çağırma."
+                    },
+                    {
+                        code: `# Küçük bir oyun başlangıç mesajı fonksiyonu
+def oyun_baslat():
+    print("================================")
+    print("        KUKIRI'NIN MACERASI       ")
+    print("================================")
+    print("Kahraman hazır mı? Hadi başlayalım!")
+
+oyun_baslat()
+`,
+                        description: "Bir oyun için başlangıç mesajı."
+                    }
+                ],
+                challenges: [
+                    "Kendi ismini ve favori hayvanını ekrana yazdıran bir fonksiyon oluştur ve bu fonksiyonu çağır.",
+                    "Ekrana 'Kukiri dans ediyor! 🎶' mesajını 5 kez yazdıran bir fonksiyon oluştur ve çalıştır.",
+                    "Bir 'gülümseme_yazdir()' fonksiyonu yap. Bu fonksiyon her çağrıldığında ekrana '😊' emojisini yazdırsın. Ardından bu fonksiyonu 3 kere çağır."
+                ]
+            },
+            "func-params": {
+                title: "Fonksiyon Parametreleri: Kukiri'ye Bilgi Göndermek! 📦",
+                subtitle: "Fonksiyonlara nasıl bilgi göndeririz?",
+                theory: `
+                    <p>Özel komutlar (fonksiyonlar) harika, ama her zaman aynı şeyi mi yapsınlar? Hayır! Fonksiyonlara dışarıdan bilgi göndermek için <strong>parametreler</strong> kullanırız! 📦</p>
+                    <p>Parametreler, fonksiyonu çağırırken ona verdiğimiz bilgilerdir. Tıpkı birine "Merhaba [isim]" derken, "isim" kısmına farklı isimler koymak gibi.</p>
+                    <div class="example-box">
+                        <h4>📦 Kukiri'nin Parametre Kullanımı:</h4>
+                        <ul>
+                            <li><strong>Tanımlama:</strong> Fonksiyonu tanımlarken parantez içine parametrelerin isimlerini yazarsın. Bunlar fonksiyonun içinde birer değişken gibi kullanılır. (Örnek: <code>def selamla(isim):</code>)</li>
+                            <li><strong>Gönderme (Çağırma):</strong> Fonksiyonu çağırırken parantez içine, parametrelerin karşılığı olan değerleri yazarsın. Bu değerlere **argüman (argument)** denir. (Örnek: <code>selamla("Kukiri")</code>)</li>
+                            <li><strong>Birden Fazla Parametre:</strong> Birden fazla parametre olabilir, virgülle ayrılırlar. Sıraları önemlidir!</li>
+                            <li><strong>Varsayılan Değer:</strong> Bazı parametrelere varsayılan bir değer atayabiliriz. Eğer fonksiyona o parametre için değer göndermezsek, varsayılan değerini kullanır.</li>
+                        </ul>
+                    </div>
+                    <p>Parametreler sayesinde fonksiyonlarını çok daha esnek ve kullanışlı hale getirebilirsin!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Tek parametreli fonksiyon
+def yas_goster(yas):
+    print(f"Sen {yas} yaşındasın.")
+
+yas_goster(12)
+`,
+                        description: "Tek parametreli fonksiyon tanımlama ve çağırma."
+                    },
+                    {
+                        code: `# Birden fazla parametreli fonksiyon
+def toplama_yap(sayi1, sayi2):
+    toplam = sayi1 + sayi2
+    print(f"Girilen sayıların toplamı: {toplam}")
+
+toplama_yap(10, 5)
+`,
+                        description: "Birden fazla parametreli fonksiyon."
+                    },
+                    {
+                        code: `# Varsayılan değere sahip parametreler
+def merhaba_de(isim, dil="Türkçe"):
+    if dil == "Türkçe":
+        print(f"Merhaba, {isim}!")
+    else:
+        print(f"Hello, {isim}!")
+
+merhaba_de("Ayhan") # Varsayılan dil kullanıldı
+merhaba_de("John", "İngilizce") # 'İngilizce' dilini belirttik
+`,
+                        description: "Varsayılan parametre değeri atama."
+                    }
+                ],
+                challenges: [
+                    "İki sayıyı çarpan ve sonucunu ekrana yazdıran bir fonksiyon yaz. Bu fonksiyonu farklı sayı çiftleriyle 3 kez çağır.",
+                    "Bir fonksiyon oluştur: <code>selamla_sehir(ad, sehir)</code>. Bu fonksiyon 'Merhaba [ad], [şehir] şehrinden misin?' yazdırsın. Kendi adın ve yaşadığın şehirle fonksiyonu çağır.",
+                    "Bir sayının karesini hesaplayan bir fonksiyon yaz (örneğin: <code>kare_al(sayi)</code>). Bu fonksiyonu 7 ve 11 sayıları için çağır ve sonuçları yazdır.",
+                    "Varsayılan değeri olan bir fonksiyon yaz: <code>kitap_oku(kitap_adi, yazar='Anonim')</code>. Bu fonksiyon 'Şu an [yazar] tarafından yazılan [kitap_adi] okunuyor.' yazdırsın. Hem yazarı belirtmeden hem de belirterek çağır."
+                ]
+            },
+            "func-return": {
+                title: "Return Deyimi: Kukiri'nin Cevapları! 🎁",
+                subtitle: "Fonksiyonlardan nasıl sonuç alırız?",
+                theory: `
+                    <p>Bazen fonksiyonlar bir işi yapıp bitirir ama bize bir **sonuç döndürmesini** isteriz! 🎁 İşte <strong><code>return</code></strong> komutu tam da bunun için var. <code>return</code>, fonksiyonun bir değeri hesaplayıp bu değeri dışarıya (fonksiyonu çağıran yere) geri vermesini sağlar.</p>
+                    <div class="example-box">
+                        <h4>🎁 Kukiri'nin <code>return</code> Kuralları:</h4>
+                        <ul>
+                            <li><strong>Değer Döndürme:</strong> <code>return</code> komutu, fonksiyonun hesapladığı veya bulduğu bir değeri dışarıya aktarır. Bu değeri bir değişkene atayabilir veya doğrudan kullanabiliriz.</li>
+                            <li><strong>Fonksiyonu Bitirme:</strong> <code>return</code> komutu çalıştığı anda, fonksiyonun çalışması biter. <code>return</code> satırından sonraki hiçbir kod çalışmaz.</li>
+                            <li><strong>Değer Yoksa <code>None</code>:</strong> Eğer bir fonksiyonda <code>return</code> komutu kullanmazsan, Python otomatik olarak <code>None</code> (hiçbir şey) döndürür.</li>
+                            <li><strong>Birden Fazla Değer Döndürme:</strong> Python'da bir fonksiyon birden fazla değer de döndürebilir! Bu durumda değerler bir tuple olarak döner.</li>
+                        </ul>
+                    </div>
+                    <p><code>return</code> ile fonksiyonların çok daha faydalı hale gelebilir, çünkü yaptıkları işin sonuçlarını diğer kod parçalarıyla paylaşabilirler.</p>
+                `,
+                examples: [
+                    {
+                        code: `# Sayının karesini döndüren fonksiyon
+def kare_al(sayi):
+    sonuc = sayi * sayi
+    return sonuc
+
+kare_5 = kare_al(5)
+print(f"5'in karesi: {kare_5}")
+`,
+                        description: "Tek değer döndüren fonksiyon."
+                    },
+                    {
+                        code: `# İki sayının ortalamasını döndüren fonksiyon
+def ortalama_hesapla(s1, s2):
+    ortalama = (s1 + s2) / 2
+    return ortalama
+
+sinif_ortalamasi = ortalama_hesapla(80, 90)
+print(f"Notların ortalaması: {sinif_ortalamasi}")
+`,
+                        description: "Ortalama hesaplayan ve döndüren fonksiyon."
+                    },
+                    {
+                        code: `# Birden fazla değer döndürme (tuple olarak)
+def bilgiler_getir(ad, yas):
+    return ad, yas, "Python Öğrencisi"
+
+isim, yasi, unvan = bilgiler_getir("Kukiri", 8)
+print(f"Ad: {isim}, Yaş: {yasi}, Unvan: {unvan}")
+`,
+                        description: "Birden fazla değer döndüren fonksiyon."
+                    }
+                ],
+                challenges: [
+                    "Bir kelimeyi alan ve o kelimenin tamamını büyük harfe çevirip döndüren bir fonksiyon yaz. Sonucu ekrana yazdır.",
+                    "İki sayının farkını hesaplayan ve döndüren bir fonksiyon oluştur. Sonucu bir değişkene ata ve ekrana yazdır.",
+                    "Bir sayının çift mi tek mi olduğunu kontrol eden (<code>True</code> veya <code>False</code> döndüren) bir fonksiyon yaz. Fonksiyonu farklı sayılarla test et.",
+                    "Bir dairenin yarıçapını parametre olarak alan ve alanını (Pi * yarıçap * yarıçap) hesaplayıp döndüren bir fonksiyon yaz (Pi için 3.14 kullan)."
+                ]
+            },
+            "modules": {
+                title: "Modüller: Kukiri'nin Sihirli Kütüphanesi! 📚",
+                subtitle: "Python'a yeni yetenekler ekle",
+                theory: `
+                    <p>Python çok güçlü bir dil, ama bazen daha özel şeyler yapmak isteyebiliriz. İşte tam bu noktada <strong>Modüller</strong> devreye giriyor! 📚</p>
+                    <p>Modüller, başkalarının yazdığı ve belirli görevleri yerine getiren hazır kod parçalarını içeren dosyalardır. Tıpkı bir sihirli kütüphane gibi! Bu modülleri programımıza dahil ederek Python'a yeni yetenekler katabiliriz.</p>
+                    <div class="example-box">
+                        <h4>📚 Kukiri'nin <code>import</code> Sihirleri:</h4>
+                        <ul>
+                            <li><strong><code>import module_adı</code>:</strong> Bu komut, modülün tamamını programına ekler. Modülün içindeki fonksiyonları kullanmak için <code>module_adı.fonksiyon_adı()</code> şeklinde yazmalısın. (Örnek: <code>import random</code>, sonra <code>random.randint()</code>)</li>
+                            <li><strong><code>from module_adı import fonksiyon_adı</code>:</strong> Eğer modülün sadece belirli bir fonksiyonunu veya değişkenini kullanmak istersen, bu daha az yer kaplar. O zaman doğrudan fonksiyon_adı() yazabilirsin. (Örnek: <code>from math import pi</code>, sonra sadece <code>pi</code>)</li>
+                            <li>Python'da binlerce hazır modül var! Rastgele sayılar, matematiksel işlemler, tarih ve saat, oyun geliştirme gibi birçok alanda sana yardımcı olurlar.</li>
+                        </ul>
+                    </div>
+                    <p>Modüller, kod yazmanı çok kolaylaştırır çünkü her şeyi sıfırdan yazmak zorunda kalmazsın. Hazır sihirleri kullanmak gibidir!</p>
+                `,
+                examples: [
+                    {
+                        code: `# random modülü (rastgele sayılar için)
+import random
+zar_sonucu = random.randint(1, 6) # 1 ile 6 arasında rastgele bir tam sayı seç
+print(f"Attığın zarın sonucu: {zar_sonucu}")
+`,
+                        description: "Rastgele sayı üretmek için 'random' modülü."
+                    },
+                    {
+                        code: `# math modülü (matematiksel işlemler için)
+import math
+yaricap = 5
+daire_alani = math.pi * (yaricap ** 2)
+print(f"Yarıçapı {yaricap} olan dairenin alanı: {round(daire_alani, 2)}")
+`,
+                        description: "Matematiksel işlemler için 'math' modülü."
+                    },
+                    {
+                        code: `# time modülü (kodu duraklatmak için)
+import time
+print("Kukiri 1 saniye bekleyecek...")
+time.sleep(1) # Kodu 1 saniye duraklatır
+print("Bekleme bitti! 👋")
+`,
+                        description: "Kodu belirli bir süre duraklatmak için 'time' modülü."
+                    },
+                    {
+                        code: `# datetime modülü (tarih ve saat için)
+import datetime
+simdi = datetime.datetime.now() # Şu anki tarih ve saat bilgisi
+print(f"Şu anki zaman: {simdi.strftime('%Y-%m-%d %H:%M:%S')}")
+`,
+                        description: "Güncel tarih ve saati almak için 'datetime' modülü."
+                    }
+                ],
+                challenges: [
+                    "<code>random</code> modülünü kullanarak 1 ile 100 arasında rastgele bir sayı seç ve ekrana yazdır.",
+                    "<code>time</code> modülünü kullanarak kodunu 3 saniye duraklat, sonra '3 saniye geçti!' mesajını yazdır.",
+                    "<code>math</code> modülünden Pi sayısını içe aktar (<code>from math import pi</code>) ve yarıçapı 10 olan bir dairenin çevresini (2 * Pi * yarıçap) hesapla ve yazdır.",
+                    "Bugünün tarihini ve saatini gösteren bir kod yaz (<code>datetime</code> modülünü kullan)."
+                ]
+            },
+            "files": {
+                title: "Dosya İşlemleri: Kukiri'nin Not Defteri! 📝",
+                subtitle: "Bilgileri sanal dosyalara kaydetme ve okuma (Sadece tarayıcı içinde)",
+                theory: `
+                    <p>Bilgisayarlar bilgileri kalıcı olarak saklamak için dosyalara ihtiyaç duyar. Tıpkı senin bir not defterine bir şeyler yazıp saklaman gibi! 📁 Python ile de dosyalar oluşturabilir, içine yazabilir veya içindeki bilgileri okuyabiliriz.</p>
+                    <div class="example-box">
+                        <h4>💾 Kukiri'nin Sanal Not Defteri:</h4>
+                        <p>Bu konsol tarayıcıda çalıştığı için, yazdığımız dosyalar senin bilgisayarının gerçek diskine kaydedilmez. Bunun yerine, Pyodide (konsolun içindeki Python) özel, <strong>sanal bir not defteri</strong> kullanır. Bu not defterine yazdığın her şey sadece bu sayfa açık olduğu sürece aklında kalır. Sayfayı yenilediğinde veya kapattığında içindeki bilgiler silinir. Ama öğrenmek için harika bir yol!</p>
+                        <ul>
+                            <li><strong><code>open("dosya_adı.txt", "w")</code>:</strong> Bir dosyayı yazmak ('w' for write) için açar. Eğer dosya yoksa oluşturur, varsa içini temizler.</li>
+                            <li><strong><code>open("dosya_adı.txt", "a")</code>:</strong> Bir dosyaya ekleme yapmak ('a' for append) için açar. İçeriği silmeden sonuna ekler.</li>
+                            <li><strong><code>open("dosya_adı.txt", "r")</code>:</strong> Bir dosyayı okumak ('r' for read) için açar.</li>
+                            <li><strong><code>.write("içerik")</code>:</strong> Dosyaya metin yazar.</li>
+                            <li><strong><code>.read()</code>:</strong> Dosyanın tüm içeriğini okur.</li>
+                            <li><strong><code>with open(...) as f:</code>:</strong> Bu yöntem en güvenlisidir. İşlemler bittiğinde dosyayı otomatik olarak kapatır, böylece sorun yaşamazsın.</li>
+                        </ul>
+                    </div>
+                    <p>Şimdi Kukiri'nin not defterine bir şeyler yazalım ve sonra okuyalım!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Sanal dosyaya yazma
+# NOT: Bu dosyalar tarayıcının belleğinde geçici olarak saklanır.
+# Sayfayı yenilediğinde veya kapattığında silinirler.
+try:
+    with open("kukiri_notlari.txt", "w", encoding="utf-8") as f:
+        f.write("Merhaba, ben Kukiri!\n")
+        f.write("Bugün Python öğrenmek harika gidiyor.\n")
+    print("Sanal dosya 'kukiri_notlari.txt' başarıyla oluşturuldu ve yazıldı.")
+except Exception as e:
+    print(f"Kukiri bir sorunla karşılaştı: {e}")
+`,
+                        description: "Yeni bir sanal dosya oluşturma ve içine yazma."
+                    },
+                    {
+                        code: `# Sanal dosyayı okuma
+# Önceki kodu çalıştırarak dosyanın var olduğundan emin ol!
+try:
+    with open("kukiri_notlari.txt", "r", encoding="utf-8") as f:
+        icerik = f.read()
+    print("\\n--- Kukiri'nin Not Defteri İçeriği ---")
+    print(icerik)
+    print("---------------------------------------")
+except FileNotFoundError:
+    print("Kukiri uyarısı: Okunacak dosya bulunamadı. Önce dosyayı oluşturmalısın!")
+except Exception as e:
+    print(f"Kukiri bir sorunla karşılaştı: {e}")
+`,
+                        description: "Oluşturulan sanal dosyanın içeriğini okuma."
+                    },
+                    {
+                        code: `# Sanal dosyaya ekleme yapma
+# Önceki kodu çalıştırarak dosyanın var olduğundan emin ol!
+try:
+    with open("kukiri_notlari.txt", "a", encoding="utf-8") as f:
+        f.write("Yeni bir satır ekledim!\n")
+    print("Sanal dosya 'kukiri_notlari.txt' güncellendi.")
+except Exception as e:
+    print(f"Kukiri bir sorunla karşılaştı: {e}")
+`,
+                        description: "Mevcut sanal dosyaya yeni içerik ekleme."
+                    }
+                ],
+                challenges: [
+                    "Boş bir 'deneme.txt' dosyası oluştur ve içine sadece 'Bu bir deneme yazısıdır.' yazdır (sanal).",
+                    "O yazdığın 'deneme.txt' dosyasının içeriğini oku ve konsola yazdır.",
+                    "Kullanıcıdan bir kelime al ve onu 'kelimeler.txt' dosyasına ekle (sanal). Sonra bu dosyanın tüm içeriğini oku ve konsola yazdır.",
+                    "Sanal bir 'sayilar.txt' dosyası oluştur. İçine 1'den 5'e kadar sayıları her satıra bir tane gelecek şekilde yaz. Sonra bu dosyayı oku ve her sayıyı 2 ile çarpıp ekrana yazdır."
+                ]
+            },
+            "errors": {
+                title: "Hata Yönetimi: Kukiri Hata Avında! 🐞",
+                subtitle: "Programdaki hataları yakala ve düzelt",
+                theory: `
+                    <p>Kod yazarken hata yapmak çok normal! 🐛 En iyi programcılar bile hata yapar. Önemli olan, hataları yakalamak, anlamak ve programımızın çökmesini engellemektir. İşte <strong><code>try-except</code></strong> blokları tam da bunun için var!</p>
+                    <div class="example-box">
+                        <h4>🐞 Kukiri'nin Hata Yakalama Rehberi:</h4>
+                        <ul>
+                            <li><strong><code>try</code>:</strong> Hata verebilecek kodu buraya yazarsın. Python bu bloktaki kodu dikkatlice denetler.</li>
+                            <li><strong><code>except</code>:</strong> Eğer <code>try</code> bloğunda bir hata olursa, Python normal akışı durdurur ve buradaki kodu çalıştırır. Böylece programın çökmez, sen de hatayı yönetebilirsin.
+                                <ul>
+                                    <li>Belirli bir hata türünü yakalayabilirsin (Örnek: <code>except ValueError:</code>)</li>
+                                    <li>Hatayı bir değişkene atayabilirsin: <code>except HataTuru as e:</code></li>
+                                </ul>
+                            </li>
+                            <li><strong><code>finally</code> (İsteğe Bağlı):</strong> Bu blok, <code>try</code> bloğu hata verse de vermese de her zaman çalışır. Genellikle temizlik işlemleri için kullanılır.</li>
+                            <li><strong><code>raise</code>:</strong> Bazen sen de kendi özel hatalarını oluşturup fırlatmak isteyebilirsin! Bu, belirli bir durum yanlış olduğunda programı uyarmanın bir yoludur.</li>
+                        </ul>
+                    </div>
+                    <p>Hatalar, sana programının nasıl çalıştığını ve neleri düzeltmen gerektiğini gösteren ipuçlarıdır. Kukiri her hatanın bir öğrenme fırsatı olduğunu düşünüyor!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Sayı girişi hatası (ValueError) yakalama
+try:
+    yas_str = input("Yaşınızı girin: ")
+    yas = int(yas_str)
+    print(f"Yaşınız: {yas}")
+except ValueError:
+    print("Kukiri uyarısı: Lütfen geçerli bir sayı girin!")
+`,
+                        description: "Kullanıcı geçersiz girdiğinde ValueError hatasını yakalama."
+                    },
+                    {
+                        code: `# Sıfıra bölme hatası (ZeroDivisionError) yakalama
+try:
+    pay = 10
+    payda = int(input("Bir sayı girin (0 olmasın): "))
+    sonuc = pay / payda
+    print(f"Sonuç: {sonuc}")
+except ZeroDivisionError:
+    print("Kukiri uyarısı: Bir sayıyı sıfıra bölemezsin! 🚫")
+except ValueError:
+    print("Kukiri uyarısı: Geçersiz sayı formatı!")
+`,
+                        description: "Sıfıra bölme ve birden fazla hata türünü yakalama."
+                    },
+                    {
+                        code: `# Kendi hatanı fırlatmak (raise)
+try:
+    sicaklik = int(input("Sıcaklığı girin: "))
+    if sicaklik > 100:
+        raise ValueError("Sıcaklık 100'den yüksek olamaz!")
+    print(f"Girilen sıcaklık: {sicaklik}")
+except ValueError as e:
+    print(f"Kukiri uyarısı: {e}")
+`,
+                        description: "Belirli bir koşulda özel hata fırlatma ve yakalama."
+                    }
+                ],
+                challenges: [
+                    "Kullanıcıdan iki sayı al ve birinciyi ikinciye böl. Eğer ikinci sayı 0 ise 'Sıfıra bölemezsin!' hatasını yakalayıp yazdır.",
+                    "Bir liste oluştur ([10, 20, 30]). Kullanıcıdan bir indeks numarası iste. Eğer kullanıcı listenin boyutundan daha büyük bir indeks (örneğin 5) girerse 'Listede böyle bir eleman yok!' hatasını yakala.",
+                    "Kullanıcıdan bir yaş girmesini iste. Eğer yaş 0'dan küçükse 'Yaş negatif olamaz!' şeklinde kendi <code>ValueError</code> hatanı fırlat ve bunu yakalayarak ekrana yazdır.",
+                    "Bir fonksiyon yaz: <code>karekok_al(sayi)</code>. Bu fonksiyon, eğer sayı negatifse 'Negatif sayıların karekökü alınamaz!' diye bir <code>ValueError</code> fırlatsın. Fonksiyonu hem pozitif hem negatif sayılarla test et ve hatayı yakala."
+                ]
+            },
+            "classes": {
+                title: "Sınıflar (Class): Kukiri'nin Robot Fabrikası! 🤖",
+                subtitle: "Kendi özel nesnelerini ve karakterlerini yarat",
+                theory: `
+                    <p>Programlamada bazen aynı türden birçok şey oluşturmak isteriz: Örneğin bir oyundaki farklı robotlar, farklı hayvanlar veya farklı binalar. Her birini tek tek sıfırdan yazmak yerine, bir "tarif" veya "plan" oluşturabiliriz. İşte bu tariflere <strong>Sınıf (Class)</strong> deriz! 🤖</p>
+                    <p>Sınıf, belirli özelliklere (veri) ve yeteneklere (fonksiyonlar/metotlar) sahip nesneler oluşturmak için bir şablondur. Tıpkı bir robotun planı gibi, o plandan istediğin kadar robot üretebilirsin!</p>
+                    <div class="example-box">
+                        <h4>🤖 Kukiri'nin Sınıf Atölyesi:</h4>
+                        <ul>
+                            <li><strong><code>class</code>:</strong> Bir sınıfı tanımlamak için kullanılır. (Örnek: <code>class Robot:</code>)</li>
+                            <li><strong><code>__init__(self, ...)</code>:</strong> Bu çok özel bir fonksiyondur! Bir sınıftan yeni bir **nesne** oluşturulduğunda ilk çalışan fonksiyondur (buna **yapıcı - constructor** da denir). Nesnenin adı, rengi gibi başlangıç özelliklerini (verilerini) burada ayarlarız.</li>
+                            <li><strong><code>self</code>:</strong> Her metodun (sınıfın içindeki fonksiyonların) ilk parametresi her zaman <code>self</code> olmalıdır. Bu, o metodun hangi **nesneye** ait olduğunu gösterir.</li>
+                            <li><strong>Nesne (Object):</strong> Sınıftan oluşturduğun her bir şeye **nesne** denir. Tıpkı robot planından ürettiğin her bir robot gibi! (Örnek: <code>kukiri = Robot("Kukiri", "mor")</code>)</li>
+                            <li><strong>Metot (Method):</strong> Bir sınıfın içindeki fonksiyonlara **metot** denir. Nesneler bu metotları kullanarak belirli görevleri yerine getirir.</li>
+                        </ul>
+                    </div>
+                    <p>Sınıflar sayesinde kodunu daha düzenli, anlaşılır ve tekrar kullanılabilir hale getirebilirsin. Haydi kendi robotlarımızı yapalım!</p>
+                `,
+                examples: [
+                    {
+                        code: `# Bir Robot sınıfı tanımlayalım
+class Robot:
+    def __init__(self, ad, renk):
+        self.ad = ad
+        self.renk = renk
+        self.enerji = 100
+
+    def selamla(self):
+        return f"Merhaba, ben {self.ad}! Rengim {self.renk}."
+
+# Yeni robot nesnesi oluşturalım
+kukiri_robot = Robot("Kukiri 2.0", "mor")
+print(kukiri_robot.selamla())
+`,
+                        description: "Basit bir sınıf ve nesne oluşturma."
+                    },
+                    {
+                        code: `# Robotun hareket etmesini sağlayan metot
+class Robot:
+    def __init__(self, ad):
+        self.ad = ad
+        self.enerji = 100
+
+    def hareket_et(self, mesafe):
+        if self.enerji >= mesafe:
+            self.enerji -= mesafe
+            return f"{self.ad}, {mesafe} birim hareket etti. Kalan enerji: {self.enerji}"
+        else:
+            return f"{self.ad}'in enerjisi yetersiz!"
+
+alp_robot = Robot("ALP-1K")
+print(alp_robot.hareket_et(30))
+print(alp_robot.hareket_et(80)) # Enerjisi yetmezse
+`,
+                        description: "Sınıfa metot ekleme ve kullanma."
+                    },
+                    {
+                        code: `# Farklı robot nesneleri oluşturma
+class Robot:
+    def __init__(self, ad, renk):
+        self.ad = ad
+        self.renk = renk
+    def bilgileri_goster(self):
+        return f"Ad: {self.ad}, Renk: {self.renk}"
+
+robot1 = Robot("Robo", "mavi")
+robot2 = Robot("Bot", "kırmızı")
+print(robot1.bilgileri_goster())
+print(robot2.bilgileri_goster())
+`,
+                        description: "Aynı sınıftan birden fazla nesne oluşturma."
+                    }
+                ],
+                challenges: [
+                    "Kendi evcil hayvanın için bir <code>Hayvan</code> sınıfı oluştur. Bu sınıfın <code>ad</code>, <code>tür</code> (köpek, kedi vb.) ve <code>yas</code> özelliklerini <code>__init__</code> metodu içinde tanımla.",
+                    "<code>Hayvan</code> sınıfına 'ses_cikar()' adında bir metot ekle. Bu metot hayvanın türüne göre farklı bir ses (örneğin: 'Hav hav!' veya 'Miyav!') yazdırsın.",
+                    "Bu <code>Hayvan</code> sınıfından en az 2 farklı hayvan nesnesi yarat (örneğin bir köpek ve bir kedi). Her bir hayvanın adını ve türünü yazdır, sonra da 'ses_cikar()' metotlarını çağır.",
+                    "<code>Hayvan</code> sınıfına <code>buyu()</code> adında bir metot ekle. Bu metot çağrıldığında hayvanın yaşını 1 artırsın. Bir hayvanın yaşını büyüt ve yeni yaşını yazdır."
+                ]
+            },
+            "games": {
+                title: "Mini Oyunlar: Kukiri ile Oyun Zamanı! 🎮",
+                subtitle: "Python ile kendi mini oyunlarını yap!",
+                theory: `
+                    <p>Kodlama sadece sıkıcı sayılardan ibaret değil! Python ile kendi eğlenceli oyunlarını yapabilirsin! ✨ Sayı tahmin etme, macera seçme gibi basit metin tabanlı oyunlarla başlayalım.</p>
+                    <div class="example-box">
+                        <h4>🎲 Oyun Yapımında Ne Kullanacağız?</h4>
+                        <ul>
+                            <li><strong><code>random</code> modülü:</strong> Bilgisayarın rastgele bir şey seçmesini sağlar (oyunlarda çok işe yarar!).</li>
+                            <li><strong><code>input()</code>:</strong> Oyuncudan tahmin veya seçim almamızı sağlar.</li>
+                            <li><strong><code>if/elif/else</code>:</strong> Oyuncunun seçimine göre oyunun nasıl ilerleyeceğine karar vermemizi sağlar.</li>
+                            <li><strong><code>while</code> döngüsü:</strong> Oyunun belirli bir koşul sağlanana kadar devam etmesini sağlar (örneğin, doğru tahmin edene kadar).</li>
+                            <li><strong>Değişkenler:</strong> Oyunun skorunu, canını, gizli sayıları saklamak için.</li>
+                        </ul>
+                    </div>
+                    <p>Şimdi 'Kukiri'nin Gizli Sayı Oyunu' ile kodlamanın eğlenceli yüzünü keşfedelim! Hazır mısın?</p>
+                `,
+                examples: [
+                    {
+                        code: `# Kukiri'nin Gizli Sayı Oyunu!
+import random
+
+print("Aklımda 1 ile 5 arasında gizli bir sayı tuttum.")
+gizli_sayi = random.randint(1, 5)
+tahmin_hakki = 3
+
+while tahmin_hakki > 0:
+    try:
+        tahmin = int(input(f"Kalan tahmin hakkın: {tahmin_hakki}. Tahminin ne? "))
+        if tahmin == gizli_sayi:
+            print("🎉 Tebrikler! Doğru tahmin!")
+            break
+        elif tahmin < gizli_sayi:
+            print("👆 Daha büyük bir sayı dene!")
+        else:
+            print("👇 Daha küçük bir sayı dene!")
+        tahmin_hakki -= 1
+    except ValueError:
+        print("Lütfen sadece sayı gir! 😬")
+        
+if tahmin_hakki == 0:
+    print(f"Maalesef tahmin hakların bitti. Gizli sayı {gizli_sayi} idi. 😊")
+`,
+                        description: "Sayı tahmin etme oyunu."
+                    },
+                    {
+                        code: `# Basit Taş-Kağıt-Makas Oyunu
+import random
+
+secenekler = ["taş", "kağıt", "makas"]
+bilgisayar_secimi = random.choice(secenekler)
+
+oyuncu_secimi = input("Taş, kağıt veya makas? ").lower()
+
+print(f"Bilgisayarın seçimi: {bilgisayar_secimi}")
+
+if oyuncu_secimi == bilgisayar_secimi:
+    print("Berabere!")
+elif (oyuncu_secimi == "taş" and bilgisayar_secimi == "makas") or \
+     (oyuncu_secimi == "kağıt" and bilgisayar_secimi == "taş") or \
+     (oyuncu_secimi == "makas" and bilgisayar_secimi == "kağıt"):
+    print("Sen kazandın! 🎉")
+else:
+    print("Bilgisayar kazandı! 😔")
+`,
+                        description: "Taş-Kağıt-Makas oyunu."
+                    },
+                    {
+                        code: `# Küçük Macera Seç Oyunu
+print("Büyük bir ormana geldin. Önünde iki yol var.")
+secim = input("Hangi yoldan gitmek istersin? (sol/sağ): ").lower()
+
+if secim == "sol":
+    print("Sol yolda eski bir harabe buldun. İçeri girmeye karar verdin.")
+    # Daha fazla if/else eklenebilir
+elif secim == "sağ":
+    print("Sağ yolda gürültülü bir nehre ulaştın. Köprü aramaya karar verdin.")
+    # Daha fazla if/else eklenebilir
+else:
+    print("Geçerli bir seçim yapmadın. Kukiri seni güvenli yere götürüyor.")
+`,
+                        description: "Basit bir macera seç oyunu."
+                    }
+                ],
+                challenges: [
+                    "Kukiri'nin Gizli Sayı Oyunu'nu 1-20 aralığında ve 7 tahmin hakkı olacak şekilde değiştir.",
+                    "Basit bir 'taş-kağıt-makas' oyunu yap. Kullanıcıdan 'taş', 'kağıt' veya 'makas' girmesini iste (<code>input()</code>). Bilgisayar rastgele (<code>random.choice()</code>) birini seçsin ve kazananı ekrana yazdır.",
+                    "Bir 'Macera Seç' oyunu oluştur. Kullanıcıya 2 seçenek sun (örneğin: 'Sol kapıdan git' veya 'Sağ kapıdan git'). Kullanıcının seçimine göre farklı sonuçlar yazdıran (<code>if/elif/else</code>) bir hikaye oluştur.",
+                    "Kukiri'nin enerji seviyesi (100) olsun. Kullanıcıdan 'koş', 'zıpla' gibi komutlar al. Her komutta enerjiyi azalt (örneğin koş 10, zıpla 5 enerji harcasın). Enerji 0'ın altına düşünce 'Enerjin bitti, Kukiri uyuyor. 😴' yazdıran bir kod yaz."
+                ]
+            }
+        };
+
+        // Pyodide yüklendiğinde kullanılacak global değişken
+        let pyodide;
+
+        // DOM elements
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const lessonTitle = document.getElementById('lesson-title');
+        const lessonSubtitle = document.getElementById('lesson-subtitle');
+        const theoryContent = document.getElementById('theory-content');
+        const exampleContent = document.getElementById('example-content');
+        const challengeContent = document.getElementById('challenge-content');
+        const outputConsole = document.getElementById('output-console');
+        const runButton = document.getElementById('run-btn');
+        const clearButton = document.getElementById('clear-btn');
+        const hintButton = document.getElementById('hint-btn');
+        const copyExampleButton = document.getElementById('copy-example-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelpButton = document.getElementById('close-help');
+
+        // CodeMirror'ı başlat
+        const codeEditorElement = document.getElementById('code-editor');
+        let editor; // Editor değişkenini Pyodide yüklendikten sonra tanımlayacağız
+
+        // --- Konsol Çıktı Fonksiyonu (Pyodide için ayarlandı) ---
+        // Başarı ve hata mesajlarını daha dinamik ve eğlenceli hale getirelim
+        function outputText(text, type = 'normal') {
+            const pre = document.createElement('pre');
+            
+            if (text === null || text === undefined || (typeof text === 'string' && text.trim() === "")) {
+                if (type === 'error' && text && text.trim() !== "") {
+                    // Hata mesajı boş değilse devam et
+                } else {
+                    return; // Diğer durumlarda boş veya tanımsız metinleri yoksay
+                }
+            }
+
+            const sanitizedText = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trimEnd();
+            const isMeaningfulOutput = sanitizedText.length > 0 || (type === 'error');
+
+            if (type === 'success') {
+                pre.classList.add('output-success');
+                const successMessages = [
+                    "Harika! Kodun başarıyla çalıştı! Sen bir kodlama sihirbazısın! ✨",
+                    "Mükemmel! Tıpkı bir süper kahraman gibi kodunu çalıştırdın! 🦸‍♀️",
+                    "Vay canına! Bu kod tam istediğimiz gibi! Yaptıklarını çok seviyorum! 🎉",
+                    "Kukiri alkışlıyor! Kodun sorunsuz çalıştı, bravo! 👏",
+                    "Bir sonraki göreve hazır mısın? Kodun parlıyor! 🌟",
+                    "Başardın! Kukiri seninle gurur duyuyor! 😊"
+                ];
+                pre.innerHTML = `<span class="output-success">${sanitizedText}</span>`;
+                if (isMeaningfulOutput) pre.innerHTML += `<span class="output-kukiri-speech">\n${successMessages[Math.floor(Math.random() * successMessages.length)]}</span>`;
+            } else if (type === 'error') {
+                pre.classList.add('output-error');
+                const errorMessages = [
+                    "Oops! Kod hata verdi, ama sorun değil! Hatalar öğrenmenin en iyi yolu. Tekrar dene! 💪",
+                    "Merak etme! Her kodlama yolculuğunda hatalar olur. Nerede yanlış yapmış olabiliriz bir bakalım? 🤔",
+                    "Kukiri burada senin için! Bu hatayı birlikte çözeceğiz. Hata mesajını dikkatlice incele. 🐞",
+                    "Biraz karmaşık görünüyor ama unutma, her büyük programcı da bu hataları aldı! Pes etmek yok! 🚀",
+                    "Hata avcısı Kukiri iş başında! Hadi bu hatayı yakalayalım! 🔍"
+                ];
+                pre.innerHTML = `<span class="output-error">${sanitizedText}</span>`;
+                if (isMeaningfulOutput) pre.innerHTML += `<span class="output-kukiri-speech">\n${errorMessages[Math.floor(Math.random() * errorMessages.length)]}</span>`;
+            } else if (type === 'info') {
+                pre.classList.add('output-info');
+                pre.innerHTML = `<span class="output-info">${sanitizedText}</span>`;
+            } else if (type === 'tip') {
+                pre.classList.add('output-tip');
+                pre.innerHTML = `💡 Kukiri'den İpucu: ${sanitizedText}`;
+            } else if (type === 'kukiri') {
+                pre.classList.add('output-kukiri');
+                pre.innerHTML = `🐦 Kukiri: ${sanitizedText}`;
+            } else {
+                pre.textContent = text;
+            }
+            
+            outputConsole.appendChild(pre);
+            outputConsole.scrollTop = outputConsole.scrollHeight;
+        }
+
+        // Pyodide için input buffer ve resolve fonksiyonu
+        let resolveInputPromise;
+        let isAwaitingInput = false;
+
+        // Python'daki input() çağrısını yakalayacak fonksiyon
+        async function pyodideInput(prompt_text) {
+            if (isAwaitingInput) {
+                outputText("Kukiri uyarısı: Zaten bir giriş bekleniyor. Lütfen önceki girişi tamamlayın.", "tip");
+                return new Promise(resolve => {}); // Var olanı bekletir
+            }
+            isAwaitingInput = true;
+            outputText(`>>> ${prompt_text || ''}`, 'kukiri');
+            const inputElement = document.createElement('input');
+            inputElement.type = 'text';
+            inputElement.style.width = 'calc(100% - 10px)';
+            inputElement.style.padding = '8px';
+            inputElement.style.marginTop = '5px';
+            inputElement.style.boxSizing = 'border-box';
+            inputElement.style.border = '1px solid var(--primary)';
+            inputElement.style.borderRadius = '5px';
+            inputElement.style.fontFamily = 'monospace';
+            inputElement.style.fontSize = '0.9rem';
+            inputElement.style.background = '#333';
+            inputElement.style.color = 'var(--light)';
+            inputElement.style.marginLeft = '5px';
+            inputElement.style.marginRight = '5px';
+
+            outputConsole.appendChild(inputElement);
+            inputElement.focus();
+            outputConsole.scrollTop = outputConsole.scrollHeight;
+
+            return new Promise(resolve => {
+                resolveInputPromise = resolve;
+                inputElement.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const value = inputElement.value;
+                        inputElement.remove();
+                        isAwaitingInput = false;
+                        resolveInputPromise(value);
+                        resolveInputPromise = null;
+                    }
+                });
+            });
+        }
+
+
+        // --- Pyodide'yi Başlat ve Ayarları Yap ---
+        async function initializePyodide() {
+            pyodide = await loadPyodide({
+                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/",
+            });
+            pyodide.setStdout({
+                write: (msg) => {
+                    if (typeof msg === 'string') {
+                        outputText(msg);
+                    } else if (msg instanceof Uint8Array) {
+                        try {
+                            const decodedMsg = new TextDecoder('utf-8').decode(msg);
+                            outputText(decodedMsg);
+                        } catch (e) {
+                            console.error("Failed to decode stdout message:", e, msg);
+                            outputText(`(Decode Hatası: ${e.message}) ${msg}`, 'error');
+                        }
+                    } else {
+                        console.warn("Unexpected stdout message type:", typeof msg, msg);
+                        outputText(String(msg));
+                    }
+                },
+            });
+            pyodide.setStdin({
+                readline: pyodideInput
+            });
+            
+            loadingOverlay.style.display = 'none';
+
+            editor = CodeMirror.fromTextArea(codeEditorElement, {
+                mode: {
+                    name: "python",
+                    version: 3,
+                    singleLineStringErrors: false
+                },
+                lineNumbers: true,
+                indentUnit: 4,
+                tabSize: 4,
+                theme: "dracula",
+                extraKeys: {
+                    "Shift-Enter": function(cm) {
+                        runPythonCode();
+                    },
+                    "Tab": function(cm) {
+                        if (cm.somethingSelected()) {
+                            cm.indentSelection("add");
+                        } else {
+                            cm.replaceSelection(Array(cm.getOption("indentUnit") + 1).join(" "), "end");
+                        }
+                    }
+                },
+                lineWrapping: true
+            });
+            editor.setSize("100%", "250px");
+            editor.setValue("print('Merhaba, ben Kukiri!')\n# Kendi kodunu buraya yaz! 😊");
+
+            loadTutorialContent("intro");
+            const introTopicItem = document.querySelector('.topic-item[data-topic="intro"]');
+            if (introTopicItem) {
+                introTopicItem.classList.add('active');
+                introTopicItem.closest('.category').classList.add('open');
+            }
+
+            editor.focus();
+            outputText('AI\'Han Konsol yüklendi. Kukiri ile Python öğrenmeye başla! 🎉', 'kukiri');
+        }
+
+        // --- Kodu Çalıştır Fonksiyonu (Pyodide ile) ---
+        async function runPythonCode() {
+            // Her çalıştırmada konsolu temizle
+            outputConsole.innerHTML = ''; 
+
+            if (isAwaitingInput) {
+                outputText("Zaten bir giriş bekleniyor. Lütfen önceki girişi tamamlayın.", "tip");
+                return;
+            }
+            const code = editor.getValue();
+
+            if (!code.trim()) {
+                outputText('Lütfen çalıştırmak için Python kodu girin.', 'info');
+                return;
+            }
+
+            outputText('Kukiri kodunu kontrol ediyor... \n', 'info');
+
+            try {
+                await pyodide.runPythonAsync(code);
+                outputText('\nKodunuz başarıyla çalıştı! Maceraya devam et!', 'success');
+            } catch (err) {
+                let errorMessage = err.message || err.toString();
+                
+                // Traceback ve dosya yolu bilgilerini temizle
+                let cleanedErrorMessage = errorMessage.split('\n').filter(line => 
+                    !line.includes("Traceback") && 
+                    !line.includes("File \"/lib/python311.zip/") &&
+                    !line.includes("File \"<exec>\", line")
+                ).join('\n').trim();
+
+                let finalErrorLine = cleanedErrorMessage.split('\n').pop();
+                let errorType = "Bilinmeyen Hata";
+                if (finalErrorLine && finalErrorLine.includes(":")) {
+                    errorType = finalErrorLine.split(':')[0];
+                    cleanedErrorMessage = finalErrorLine;
+                } else {
+                    cleanedErrorMessage = "HATA: " + cleanedErrorMessage;
+                }
+                
+                outputText(`KUKIRI HATA! 🐞 ${cleanedErrorMessage}`, 'error');
+
+                // Hata türüne göre daha spesifik ipuçları
+                if (errorMessage.includes("SyntaxError")) {
+                    if (errorMessage.includes("unterminated string literal")) {
+                        outputText("Kukiri uyarısı: Eyvah, bir metin yazarken **tırnak işaretini** (tek tırnak ' veya çift tırnak \") kapatmayı unutmuşsun! Açtığın her tırnağı kapatmalısın. Örneğin: `print(\"Merhaba Kukiri!\")` olmalı, `print(\"Merhaba Kukiri!)` değil. 👀", "tip");
+                    } else if (errorMessage.includes("invalid syntax")) {
+                        outputText("Kukiri uyarısı: Yazım hatası! Python bu yazdığını tam olarak anlayamadı. Belki bir kelimeyi yanlış yazdın, bir parantezi veya iki noktayı (:) unuttun? Kodunu sanki bir bulmacaymış gibi dikkatlice incele! 🤔", "tip");
+                    } else {
+                        outputText("Kukiri uyarısı: Yazım hatası var! Python'ın dilbilgisi kurallarını kontrol etmelisin. Parantezlere, tırnaklara ve iki noktalara (:) dikkat et!", "tip");
+                    }
+                } else if (errorMessage.includes("IndentationError")) {
+                    outputText("Kukiri uyarısı: **Boşluk hatası!** Python'da kod bloklarının (if, for, def sonrası) aynı hizada olması çok önemli. Her zaman 4 boşluk kullanmaya çalış. 📏", "tip");
+                } else if (errorMessage.includes("NameError")) {
+                    outputText("Kukiri uyarısı: **İsim hatası!** Bir değişkenin veya fonksiyonun adını yanlış yazmış olabilirsin. Ya da kullanmadan önce tanımlamayı unutmuş olabilirsin. Yazdığın ismin aynısı olduğundan emin ol. 🧐", "tip");
+                } else if (errorMessage.includes("TypeError")) {
+                    outputText("Kukiri uyarısı: **Veri tipi hatası!** Sayı ile metni karıştırmış veya yanlış işlem yapmış olabilirsin. Örneğin, metni sayıyla toplamaya çalıştın mı? Dönüşümleri (int(), str()) kontrol et! 🔄", "tip");
+                } else if (errorMessage.includes("ValueError")) {
+                    outputText("Kukiri uyarısı: **Yanlış değer hatası!** Örneğin, metni sayıya çevirirken dikkat et, sadece sayı içeren metinler dönüştürülebilir. Kukiri'ye sadece doğru bilgiyi ver! 🔢", "tip");
+                } else if (errorMessage.includes("ZeroDivisionError")) {
+                    outputText("Kukiri uyarısı: **Sıfıra bölme hatası!** Hiçbir sayıyı sıfıra bölemezsin. Bu matematik kuralıdır. 🙅‍♀️", "tip");
+                } else if (errorMessage.includes("IndexError")) {
+                    outputText("Kukiri uyarısı: **Liste veya metin hatası!** Olmayan bir sıradaki elemana ulaşmaya çalıştın. Listeler ve metinler 0'dan başlar ve boyutu aşmamalısın! 📐", "tip");
+                } else if (errorMessage.includes("KeyError")) {
+                    outputText("Kukiri uyarısı: **Sözlük hatası!** Sözlükte olmayan bir anahtar (etiket) kullanmaya çalıştın. Sözlüğündeki anahtarları (isimleri) kontrol et! 🗝️", "tip");
+                } else if (errorMessage.includes("ModuleNotFoundError") || errorMessage.includes("ImportError")) {
+                    outputText("Kukiri uyarısı: Bu **sihirli kitap (modül)** Pyodide'de yüklü değil veya desteklenmiyor olabilir. Belki farklı bir modül denemelisin? 📦", "tip");
+                } else if (errorMessage.includes("OSError") || errorMessage.includes("IOError")) {
+                    outputText("Kukiri uyarısı: **Dosya işlemi hatası!** Unutma, bu bir tarayıcı ortamı ve gerçek dosyalara erişemeyiz. Sadece Kukiri'nin sanal not defteriyle çalışabiliriz. Dosya işlemlerini Python kodu içinde 'open()' kullanarak yapmalısın. Örnek koda bakabilirsin! ✅", "tip");
+                }
+                else {
+                    outputText("Kukiri uyarısı: Hmm, **beklenmedik bir hata** oluştu! Hata mesajını dikkatlice oku ve ne anlama geldiğini düşün. Her hata, yeni bir şey öğrenme fırsatıdır! Pes etme! Kukiri yanında! 🚀", "tip");
+                }
+            }
+        }
+
+        // --- Konu İçeriğini Yükleme Fonksiyonu ---
+        function loadTutorialContent(topicKey) {
+            const data = tutorialData[topicKey];
+            if (!data) {
+                console.error("Konu bulunamadı:", topicKey);
+                return;
+            }
+
+            lessonTitle.textContent = data.title;
+            lessonSubtitle.textContent = data.subtitle;
+            theoryContent.innerHTML = data.theory;
+            
+            // Örnek kodları dinamik olarak oluştur
+            exampleContent.innerHTML = ''; // Önceki örnekleri temizle
+            data.examples.forEach((example, index) => {
+                const exampleDiv = document.createElement('div');
+                exampleDiv.classList.add('example-block');
+                exampleDiv.innerHTML = `
+                    <h4>Örnek ${index + 1}: ${example.description}</h4>
+                    <pre class="example-code">${example.code}</pre>
+                `;
+                exampleContent.appendChild(exampleDiv);
+            });
+            exampleContent.innerHTML += `<p><strong>🚀 Yukarıdaki örneklerden birini editöre kopyala ve çalıştır!</strong></p>`;
+
+            challengeContent.innerHTML = '';
+            data.challenges.forEach((challenge, index) => {
+                const div = document.createElement('div');
+                div.classList.add('challenge-item');
+                div.innerHTML = `<strong>🎯 Görev ${index + 1}:</strong> ${challenge}`;
+                challengeContent.appendChild(div);
+            });
+
+            // Yeni konuya geçince editörü ve konsolu temizle
+            outputConsole.innerHTML = ''; 
+            if(editor) {
+                editor.setValue("");
+                editor.focus();
+            }
+            outputText('Merhaba! Ben Kukiri! Yeni konuya geçtik. Kodunu yazıp çalıştırmaya hazır mısın?', 'kukiri');
+        }
+
+        // --- Sayfa Yüklendiğinde Çalışacak Kodlar ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePyodide();
+
+            document.querySelectorAll('.category-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const category = header.parentElement;
+                    category.classList.toggle('open');
+                });
+            });
+
+            document.querySelectorAll('.topic-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.topic-item').forEach(t => t.classList.remove('active'));
+                    item.classList.add('active');
+                    
+                    const topicKey = item.dataset.topic;
+                    loadTutorialContent(topicKey);
+                });
+            });
+
+            runButton.addEventListener('click', runPythonCode);
+            clearButton.addEventListener('click', () => {
+                outputConsole.innerHTML = '';
+                if(editor) {
+                    editor.setValue("");
+                    editor.focus();
+                }
+                outputText('Konsol ve kod alanı temizlendi. Yeni bir maceraya hazır mısın?', 'info');
+            });
+            hintButton.addEventListener('click', () => {
+                helpModal.style.display = 'block';
+            });
+            closeHelpButton.addEventListener('click', () => {
+                helpModal.style.display = 'none';
+            });
+            window.addEventListener('click', (event) => {
+                if (event.target == helpModal) {
+                    helpModal.style.display = 'none';
+                }
+            });
+            
+            // İlk örneği kopyala butonu
+            copyExampleButton.addEventListener('click', () => {
+                // Sadece ilk örnek kodu kopyala
+                const firstExampleCodeElement = exampleContent.querySelector('.example-code'); 
+                if (firstExampleCodeElement && editor) {
+                    editor.setValue(firstExampleCodeElement.textContent.trim());
+                    editor.focus();
+                    outputText("İlk örnek kod editöre kopyalandı! Şimdi dene! 🚀", "info");
+                } else {
+                    outputText("Kopyalanacak bir örnek kod bulunamadı veya editör henüz hazır değil.", "error");
+                }
+            });
+
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+        });
+    </script>
+</body>
+</html>
