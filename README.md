@@ -1,7 +1,6 @@
 # AI'Han Python Eğitim Konsolu: Kukiri ile Öğren! 🐍🚀
 
-![Python Eğitim Konsolu Ekran Görüntüsü](https://via.placeholder.com/800x450?text=AI%27Han+Python+E%C4%9Fitim+Konsolu)
-*(Buraya projenizin bir ekran görüntüsünü veya GIF'ini ekleyebilirsiniz.)*
+
 
 ---
 
@@ -90,7 +89,9 @@ Bu proje **MIT Lisansı** altında lisanslanmıştır. Daha fazla bilgi için `L
 
 ## 👤 Yazar
 
-**Ayhan Bozkurt** - [LinkedIn Profilim](https://www.linkedin.com/in/ayhanbozkurt/)
+© 2025 AI'Han ile Yapay Zeka Öğreniyoruz by **Ayhan Bozkurt**. Tüm hakları saklıdır.
+
+[LinkedIn Profilim](https://www.linkedin.com/in/ayhanbozkurt/)
 
 ---
 
